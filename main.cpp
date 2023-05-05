@@ -26,7 +26,7 @@ static float _aspectRatio[4];
 static int gScale = 2;
 static int gSaveSlot = 1;
 
-static const int kTickDuration = 60;
+static const int kTickDuration = 30;
 
 static const char *kControlsCfg = "controls.cfg";
 

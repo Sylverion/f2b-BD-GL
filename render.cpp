@@ -172,7 +172,7 @@ Render::Render(const RenderParams *params) {
 	_lighting = params->gouraud;
 	_drawObjectIgnoreDepth = false;
 	gettimeofday(&_frameTimeStamp, 0);
-	_framesCount = 0;
+	_framesCount = 6;
 	_framesPerSec = 60;
 
 	glEnable(GL_BLEND);
@@ -264,7 +264,7 @@ void Render::drawPolygonFlat(const Vertex *vertices, int verticesCount, int colo
 		glColor4ub(0, 0, 255, 127);
 		break;
 	case kFlatColorShadow:
-		glColor4ub(0, 0, 0, 127);
+		glColor4ub(0, 0, 0, 32);
 		break;
 	case kFlatColorLight:
 		glColor4ub(255, 255, 255, 127);
@@ -721,13 +721,15 @@ void Render::drawOverlay() {
 	}
 
 	++_framesCount;
-	if ((_framesCount & 61) == 0) {
+	
+	if ((_framesCount & 31) == 0) {
 		struct timeval t1;
 		gettimeofday(&t1, 0);
 		const int msecs = (t1.tv_sec - _frameTimeStamp.tv_sec) * 1000 + (t1.tv_usec - _frameTimeStamp.tv_usec) / 1000;
 		_frameTimeStamp = t1;
 		if (msecs != 0) {
-			_framesPerSec = (int)(1000. * 62 / msecs);
+			_framesPerSec = (int)(1000. * 32 / msecs);
+			
 		}
 	}
 }
