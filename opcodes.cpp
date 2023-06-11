@@ -1400,6 +1400,7 @@ int Game::op_setCamera(int argc, int32_t *argv) {
 				break;
 			case 1:
 				if (_cameraDefaultDist && isConradInShootingPos()) {
+					//printf("case1\n");
 					_cameraDeltaRotYValue2 = value;
 				} else {
 					_cameraDeltaRotY = value;
@@ -1408,6 +1409,7 @@ int Game::op_setCamera(int argc, int32_t *argv) {
 				break;
 			case 2:
 				if (_cameraDefaultDist && isConradInShootingPos()) {
+					//printf("case2\n");
 					_cameraDistValue2 = value << 15;
 				} else {
 					_cameraDistValue = value << 15;
@@ -1417,6 +1419,7 @@ int Game::op_setCamera(int argc, int32_t *argv) {
 				break;
 			case 3:
 				if (_cameraDefaultDist && _level != 6 && isConradInShootingPos()) {
+					//printf("case3\n");
 					_yPosObserverValue2 = value << 15;
 				} else if (_cameraState == 2) {
 					_yPosObserver = _yPosObserverValue = value << 15;
@@ -1433,6 +1436,7 @@ int Game::op_setCamera(int argc, int32_t *argv) {
 				break;
 			case 6:
 				if (_cameraDefaultDist && _level != 6 && isConradInShootingPos()) {
+					//printf("case6\n");
 					_yPosObserverValue2 = value;
 				} else if (_cameraState == 2) {
 					_yPosObserver = _yPosObserverValue = value;
@@ -1722,9 +1726,11 @@ int Game::op_setupTarget(int argc, int32_t *argv) {
 
 int Game::op_getTicks(int argc, int32_t *argv) {
 	assert(argc == 1);
+	
 	debug(kDebug_OPCODES, "Game::op_getTicks() [%d]", argv[0]);
 	int32_t param = argv[0];
 	_currentObject->setData(param, _ticks);
+	//printf("Ticks: %d\n", _ticks);
 	return -1;
 }
 

@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "stub.h"
+#include <GL/gl.h> // or use <GL/glew.h> if you're using GLEW
 
 const char *g_caption = "Fade2Black/OpenGL";
 
@@ -15,18 +16,16 @@ static const char *kIconBmp = "icon.bmp";
 
 static float gAspectRatio;
 
-static const int kDefaultW = 1600;
-static const int kDefaultH = 900;
+static const int kDefaultW = 1280;
+static const int kDefaultH = 720;
 
 static int gWindowW = kDefaultW;
 static int gWindowH = kDefaultH;
 
 static float _aspectRatio[4];
 
-static int gScale = 2;
+static int gScale = 4;
 static int gSaveSlot = 1;
-
-static const int kTickDuration = 30;
 
 static const char *kControlsCfg = "controls.cfg";
 
@@ -277,6 +276,7 @@ static int transformPointerY(int y) {
 }
 
 int main(int argc, char *argv[]) {
+
 	GameStub *stub = GameStub_create();
 	if (!stub) {
 		return -1;
@@ -354,12 +354,32 @@ int main(int argc, char *argv[]) {
 	stub->initGL(gWindowW, gWindowH, _aspectRatio);
 	bool quitGame = false;
 	bool paused = false;
+	bool checkAndSaveTextureEnabled = false;
+
+	
+
+	
+
+	
 	while (1) {
+		Uint32 startTicks = SDL_GetTicks();
+		const Uint32 gameTickDuration = 1000 / 20; // 25 game updates per second
+		const Uint32 drawTickDuration = 1000 / 60; // 60 frames per second
+		static Uint32 nextGameTick = SDL_GetTicks() + gameTickDuration;
+		static Uint32 nextDrawTick = SDL_GetTicks() + drawTickDuration;
+		static Uint32 previousTicks = SDL_GetTicks();
+		static Uint32 lag = 0;
+
 		int w = gWindowW;
 		int h = gWindowH;
 		SDL_Event ev;
-		const uint32_t nextTick = SDL_GetTicks() + kTickDuration;
+		//const uint32_t nextTick = SDL_GetTicks() + kTickDuration;
 		while (SDL_PollEvent(&ev)) {
+			if (ev.type == SDL_KEYDOWN) {
+				if (ev.key.keysym.sym == SDLK_F5) {
+					checkAndSaveTextureEnabled = !checkAndSaveTextureEnabled;
+				}
+			}
 			switch (ev.type) {
 			case SDL_QUIT:
 				quitGame = true;
@@ -381,6 +401,7 @@ int main(int argc, char *argv[]) {
 				if (gKeyScancodeMap[ev.key.keysym.scancode] != 0) {
 					stub->queueKeyInput(gKeyScancodeMap[ev.key.keysym.scancode], 0);
 				} else {
+
 					switch (ev.key.keysym.sym) {
 					case SDLK_PAGEUP:
 						if (gScale < 8) {
@@ -431,6 +452,18 @@ int main(int argc, char *argv[]) {
 					case SDLK_F2:
 						stub->queueKeyInput(kKeyCodeToggleGouraudShading, 1);
 						break;
+					case SDLK_F4:
+						//gameTickDuration -= 1;
+						if (gameTickDuration < 1) {
+							//gameTickDuration = 1; // Prevent kTickDuration from going below 1
+						}
+						printf("kTickDuration: %d\n", gameTickDuration);
+						break;
+					case SDLK_F5:
+						//gameTickDuration += 1;
+						printf("kTickDuration: %d\n", gameTickDuration);
+						break;
+
 					}
 				}
 				break;
@@ -439,7 +472,7 @@ int main(int argc, char *argv[]) {
 					stub->queueKeyInput(gKeyScancodeMap[ev.key.keysym.scancode], 1);
 				}
 				break;
-			case SDL_JOYHATMOTION:
+			/*case SDL_JOYHATMOTION:
 				if (joystick) {
 					stub->queueKeyInput(kKeyCodeUp,    (ev.jhat.value & SDL_HAT_UP)    != 0);
 					stub->queueKeyInput(kKeyCodeDown,  (ev.jhat.value & SDL_HAT_DOWN)  != 0);
@@ -514,6 +547,7 @@ int main(int argc, char *argv[]) {
 					break;
 				}
 				break;
+				*/
 			default:
 				break;
 			}
@@ -521,6 +555,7 @@ int main(int argc, char *argv[]) {
 		if (quitGame) {
 			break;
 		}
+
 		if (w != gWindowW || h != gWindowH) {
 			gWindowW = w;
 			gWindowH = h;
@@ -528,20 +563,26 @@ int main(int argc, char *argv[]) {
 			stub->initGL(gWindowW, gWindowH, _aspectRatio);
 		}
 		if (!paused) {
-			const unsigned int ticks = SDL_GetTicks();
-			stub->doTick(ticks);
-			stub->drawGL();
-			SDL_GL_SwapWindow(window);
-			if (stub->shouldVibrate()) {
-				if (haptic) {
-					SDL_HapticRumbleInit(haptic);
-					SDL_HapticRumblePlay(haptic, 1., 500);
-				}
+			const Uint32 currentTicks = SDL_GetTicks();
+			Uint32 elapsedTicks = currentTicks - previousTicks;
+			previousTicks = currentTicks;
+			lag += elapsedTicks;
+
+			while (lag >= gameTickDuration) {
+				stub->doTick(startTicks);
+				nextGameTick += gameTickDuration;
+				lag -= gameTickDuration;
 			}
-			const int delayTick = nextTick - SDL_GetTicks();
-			SDL_Delay(delayTick < 16 ? 16 : delayTick);
-		} else {
-			SDL_Delay(kTickDuration);
+			float interpolation = 1.0f;
+			// interpolate and draw every drawTickDuration
+			
+			stub->drawGL(interpolation);
+			SDL_GL_SwapWindow(window);
+			// Delay to achieve desired framerate
+			//SDL_Delay(1);
+		}
+		else {
+			SDL_Delay(gameTickDuration);
 		}
 	}
 	SDL_PauseAudio(1);

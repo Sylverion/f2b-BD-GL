@@ -446,6 +446,7 @@ struct GameParams {
 };
 
 struct Game {
+	
 	typedef int (Game::*OpcodeProc)(int argc, int32_t *argv);
 	typedef bool (Game::*CollisionSlotCallbackType1)(CellMap *cell);
 	typedef bool (Game::*CollisionSlotCallbackType2)(GameObject *o, CellMap *cell, int x, int z, uint32_t a);
@@ -464,6 +465,7 @@ struct Game {
 
 	DrawBuffer _drawCharBuf;
 	DrawNumber _drawNumber;
+	int _animationUpdateCounter;
 	int _ticks;
 	int _level;
 	int _skillLevel;
@@ -695,6 +697,7 @@ struct Game {
 	void fixRoomData();
 	void updateObjects();
 	void doTick();
+	void doTickrender();
 	void initSprite(int type, int16_t key, SpriteImage *spr);
 	void clearMessage(ResMessageDescription *desc);
 	bool getMessage(int16_t key, uint32_t value, ResMessageDescription *desc);

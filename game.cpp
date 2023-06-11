@@ -10,6 +10,8 @@
 #include "resource.h"
 #include "render.h"
 #include "xmiplayer.h"
+#include <thread>
+#include <chrono>
 
 Game::Game(Render *render, const GameParams *params)
 	: _snd(&_res), _cut(render, this, &_snd), _render(render), _params(*params) {
@@ -22,6 +24,7 @@ Game::Game(Render *render, const GameParams *params)
 	_displayPsxLevelLoadingScreen = 0;
 
 	_ticks = 0;
+
 	_level = 0;
 	_skillLevel = kSkillNormal;
 	_changeLevel = false;
@@ -463,7 +466,7 @@ GameObject *Game::setupObjectsHelper(int16_t prevKey, GameObject *o_parent) {
 		o_new->anim.currentAnimKey = _res.getChild(kResType_ANI, o_new->anim.animKey);
 		setObjectFlags(p, o_new);
 		setupObjectScriptAnim(o_new);
-		o_new->anim.ticksCount = 1;
+		o_new->anim.ticksCount = 10;
 		o_new->pal = READ_LE_UINT32(p + 180);
 		assert(p[6] == 255 || p[6] == 0);
 		o_new->state = (p[6] != 0) ? 1 : 0;
@@ -1951,62 +1954,67 @@ int Game::executeObjectScript(GameObject *o) {
 
 void Game::runObject(GameObject *o) {
 	int x, y, z, ry;
-	do {
-		debug(kDebug_GAME, "Game::runObject name '%s' state %d pos %d,%d,%d flags 0x%x", o->name, o->state, o->xPos, o->yPos, o->zPos, o->flags[1]);
-		if (o->state == 1 && (o->flags[1] & 0x4000) == 0) {
-			o->xPosParentPrev = o->xPosParent;
-			o->yPosParentPrev = o->yPosParent;
-			o->zPosParentPrev = o->zPosParent;
-			GameObject *o_parent = o->o_parent;
-			o->xPosParent = o_parent->xPosParent + o_parent->xPos;
-			o->yPosParent = o_parent->yPosParent + o_parent->yPos;
-			o->zPosParent = o_parent->zPosParent + o_parent->zPos;
-			if (o->setColliding) {
-				x = o->xPosPrev;
-				y = o->yPosPrev;
-				z = o->zPosPrev;
-				ry = o->pitchPrev;
-			} else {
-				x = o->xPos;
-				y = o->yPos;
-				z = o->zPos;
-				ry = o->pitch;
-			}
-			int scriptExecCount = 0;
-			for (; scriptExecCount < 10 && !_endGame; ++scriptExecCount) {
-				if (executeObjectScript(o) != 0) {
-					break;
+	
+		do {
+			debug(kDebug_GAME, "Game::runObject name '%s' state %d pos %d,%d,%d flags 0x%x", o->name, o->state, o->xPos, o->yPos, o->zPos, o->flags[1]);
+			if (o->state == 1 && (o->flags[1] & 0x4000) == 0) {
+				o->xPosParentPrev = o->xPosParent;
+				o->yPosParentPrev = o->yPosParent;
+				o->zPosParentPrev = o->zPosParent;
+				GameObject* o_parent = o->o_parent;
+				o->xPosParent = o_parent->xPosParent + o_parent->xPos;
+				o->yPosParent = o_parent->yPosParent + o_parent->yPos;
+				o->zPosParent = o_parent->zPosParent + o_parent->zPos;
+				if (o->setColliding) {
+					x = o->xPosPrev;
+					y = o->yPosPrev;
+					z = o->zPosPrev;
+					ry = o->pitchPrev;
+				}
+				else {
+					x = o->xPos;
+					y = o->yPos;
+					z = o->zPos;
+					ry = o->pitch;
+				}
+				int scriptExecCount = 0;
+				for (; scriptExecCount < 10 && !_endGame; ++scriptExecCount) {
+					if (executeObjectScript(o) != 0) {
+						break;
+					}
+				}
+				if (scriptExecCount == 10) {
+					warning("Game::executeObjectScript() possible infinite script loop for object '%s'", o->name);
+					o->state = 0;
+				}
+				o->xPosPrev = x;
+				o->yPosPrev = y;
+				o->zPosPrev = z;
+				o->pitchPrev = ry;
+				if (o->xPos != o->xPosPrev || o->zPos != o->zPosPrev || o->o_parent->updateColliding || o->parentChanged) {
+					resetCollisionSlot(o);
+					setCollisionSlotsUsingCallback1(o->xPosParent + o->xPos, o->zPosParent + o->zPos, &Game::collisionSlotCb2);
+					o->updateColliding = true;
+					o->parentChanged = false;
+					o->room = getCellMapShr19(o->xPosParent + o->xPos, o->zPosParent + o->zPos)->room;
+				}
+				o->inSceneList = 0;
+				GameObject* o_child = o->o_child;
+				if (o_child && (o_child->flags[1] & 0x100) == 0) {
+					runObject(o_child);
 				}
 			}
-			if (scriptExecCount == 10) {
-				warning("Game::executeObjectScript() possible infinite script loop for object '%s'", o->name);
-				o->state = 0;
+			else if (o->o_parent->updateColliding) {
+				if (!o->setColliding) {
+					o->setColliding = true;
+					addToCollidingObjects(o);
+				}
 			}
-			o->xPosPrev = x;
-			o->yPosPrev = y;
-			o->zPosPrev = z;
-			o->pitchPrev = ry;
-			if (o->xPos != o->xPosPrev || o->zPos != o->zPosPrev || o->o_parent->updateColliding || o->parentChanged) {
-				resetCollisionSlot(o);
-				setCollisionSlotsUsingCallback1(o->xPosParent + o->xPos, o->zPosParent + o->zPos, &Game::collisionSlotCb2);
-				o->updateColliding = true;
-				o->parentChanged = false;
-				o->room = getCellMapShr19(o->xPosParent + o->xPos, o->zPosParent + o->zPos)->room;
-			}
-			o->inSceneList = 0;
-			GameObject *o_child = o->o_child;
-			if (o_child && (o_child->flags[1] & 0x100) == 0) {
-				runObject(o_child);
-			}
-		} else if (o->o_parent->updateColliding) {
-			if (!o->setColliding) {
-				o->setColliding = true;
-				addToCollidingObjects(o);
-			}
-		}
-		o->updateColliding = false;
-		assert(o != o->o_next);
-	} while ((o = o->o_next) != 0 && (o->flags[1] & 0x100) == 0);
+			o->updateColliding = false;
+			assert(o != o->o_next);
+			
+		} while ((o = o->o_next) != 0 && (o->flags[1] & 0x100) == 0) ;
+	
 }
 
 void Game::setPlayerRoomObjectsData(int fl) {
@@ -2028,6 +2036,7 @@ void Game::setPlayerRoomObjectsData(int fl) {
 			o = o->o_parent;
 		}
 	}
+
 }
 
 void Game::setPlayerObject(int16_t objKey) {
@@ -2586,11 +2595,13 @@ void Game::updateObjects() {
 	updateParticles();
 	drawParticles();
 }
-
 void Game::doTick() {
+	
 	const int currentRoom = _room;
+
 	updateSceneAnimations();
 	updateSceneTextures();
+
 	if (_mainLoopCurrentMode == 0) {
 		if (_musicPaused) {
 			_musicPaused = false;
@@ -2598,8 +2609,9 @@ void Game::doTick() {
 		}
 		if (_viewportSize > 0) {
 			_viewportSize -= 2;
-	                initViewport();
-		} else {
+			initViewport();
+		}
+		else {
 			_viewportSize = 0;
 			_mainLoopCurrentMode = 1;
 		}
@@ -2622,25 +2634,30 @@ void Game::doTick() {
 	}
 	addObjectsToScene();
 	updateObjects();
-	++_ticks;
+
 	if ((_params.cheats & kCheatLifeCounter) != 0) {
 		_objectsPtrTable[kObjPtrConrad]->specialData[1][18] = _varsTable[kVarConradLife];
 	}
-	runObject(_objectsPtrTable[kObjPtrWorld]->o_child);
-	if (_mainLoopCurrentMode == 1) {
-		GameObject *o_ply = getObjectByKey(_varsTable[kVarPlayerObject]);
-		CellMap *cell = getCellMapShr19(o_ply->xPosParent + o_ply->xPos, o_ply->zPosParent + o_ply->zPos);
-		if (cell->room != 0 && cell->room2 == 0) {
-			GameObject *o_room = _roomsTable[cell->room].o;
-			assert(o_room);
-			if (o_room->state != 1) {
-				while (o_room != _objectsPtrTable[kObjPtrWorld]) {
-					o_room->state = 1;
-					o_room = o_room->o_parent;
+	
+		runObject(_objectsPtrTable[kObjPtrWorld]->o_child);
+		if (_mainLoopCurrentMode == 1) {
+			GameObject* o_ply = getObjectByKey(_varsTable[kVarPlayerObject]);
+			CellMap* cell = getCellMapShr19(o_ply->xPosParent + o_ply->xPos, o_ply->zPosParent + o_ply->zPos);
+			if (cell->room != 0 && cell->room2 == 0) {
+				GameObject* o_room = _roomsTable[cell->room].o;
+				assert(o_room);
+				if (o_room->state != 1) {
+					while (o_room != _objectsPtrTable[kObjPtrWorld]) {
+						o_room->state = 1;
+						o_room = o_room->o_parent;
+					}
 				}
 			}
 		}
-	}
+	
+	//runObject(_objectsPtrTable[kObjPtrWorld]->o_child);
+
+
 	clearObjectsDrawList();
 	_render->setupProjection(kProj2D);
 	_render->setIgnoreDepth(true);
@@ -2649,7 +2666,8 @@ void Game::doTick() {
 	}
 	if (_mainLoopCurrentMode == 0) {
 		updateScreen();
-	} else if (_mainLoopCurrentMode == 1) {
+	}
+	else if (_mainLoopCurrentMode == 1) {
 		if (_objectsPtrTable[kObjPtrScan]) {
 			updateScanner();
 		}
@@ -2658,7 +2676,7 @@ void Game::doTick() {
 			if (_objectsPtrTable[kObjPtrConrad]->specialData[1][18] < 2) {
 				_objectsPtrTable[kObjPtrConrad]->specialData[1][18] = 2;
 				while (_objectsPtrTable[kObjPtrShield]->specialData[1][22] != 0) {
-					GameObject *o_tmp = _objectsPtrTable[kObjPtrShield];
+					GameObject* o_tmp = _objectsPtrTable[kObjPtrShield];
 					while (o_tmp->o_next) {
 						o_tmp = o_tmp->o_next;
 					}
@@ -2670,7 +2688,7 @@ void Game::doTick() {
 				if (_objectsPtrTable[kObjPtrShield]) {
 					_varsTable[25] = _objectsPtrTable[kObjPtrShield]->objKey;
 					if (getMessage(_objectsPtrTable[kObjPtrShield]->objKey, 0, &_tmpMsg)) {
-						_objectsPtrTable[kObjPtrShield]->text = (const char *)_tmpMsg.data;
+						_objectsPtrTable[kObjPtrShield]->text = (const char*)_tmpMsg.data;
 					}
 				}
 				setObjectData(_objectsPtrTable[kObjPtrConrad], 20, 0);
@@ -2681,7 +2699,7 @@ void Game::doTick() {
 			if (_objectsPtrTable[kObjPtrConrad]->specialData[1][18] < 1) {
 				_objectsPtrTable[kObjPtrConrad]->specialData[1][18] = 1;
 				while (_objectsPtrTable[kObjPtrShield]->specialData[1][22] != 0) {
-					GameObject *o_tmp = _objectsPtrTable[kObjPtrShield];
+					GameObject* o_tmp = _objectsPtrTable[kObjPtrShield];
 					while (o_tmp->o_next) {
 						o_tmp = o_tmp->o_next;
 					}
@@ -2693,7 +2711,7 @@ void Game::doTick() {
 				if (_objectsPtrTable[kObjPtrShield]) {
 					_varsTable[25] = _objectsPtrTable[kObjPtrShield]->objKey;
 					if (getMessage(_objectsPtrTable[kObjPtrShield]->objKey, 0, &_tmpMsg)) {
-						_objectsPtrTable[kObjPtrShield]->text = (const char *)_tmpMsg.data;
+						_objectsPtrTable[kObjPtrShield]->text = (const char*)_tmpMsg.data;
 					}
 				}
 			}
@@ -2720,16 +2738,157 @@ void Game::doTick() {
 					_displayPsxLevelLoadingScreen = 1;
 					displayPsxLevelLoadingScreen();
 				}
-			} else {
+			}
+			else {
 				setPaletteColor(1, 255, 255, 255);
 				if (getMessage(_objectsPtrTable[kObjPtrFadeToBlack]->objKey, 1, &_tmpMsg)) { // "Loading..."
 					memset(&_drawCharBuf, 0, sizeof(_drawCharBuf));
 					int w, h;
-					getStringRect((const char *)_tmpMsg.data, kFontNameCineTypo, &w, &h);
-					drawString((kScreenWidth - w) / 2, kScreenHeight / 2, (const char *)_tmpMsg.data, kFontNameCineTypo, 0);
+					getStringRect((const char*)_tmpMsg.data, kFontNameCineTypo, &w, &h);
+					drawString((kScreenWidth - w) / 2, kScreenHeight / 2, (const char*)_tmpMsg.data, kFontNameCineTypo, 0);
 				}
 			}
-		} else if (!_endGame) {
+		}
+		else if (!_endGame) {
+			updateScreen();
+		}
+		if (currentRoom != _room) {
+			changeRoom(currentRoom);
+		}
+	}
+	if (_collidingObjectsCount != 0) {
+		updateCollidingObjects();
+	}
+	++_ticks;
+	
+}
+void Game::doTickrender() {
+	const int currentRoom = _room;
+
+	updateSceneAnimations();
+	updateSceneTextures();
+
+	if (_mainLoopCurrentMode == 0) {
+		if (_musicPaused) {
+			_musicPaused = false;
+			playMusic(-1);
+		}
+		if (_viewportSize > 0) {
+			_viewportSize -= 2;
+			initViewport();
+		}
+		else {
+			_viewportSize = 0;
+			_mainLoopCurrentMode = 1;
+		}
+	}
+	if (_mainLoopCurrentMode == 1) {
+		switch (_conradHit) {
+		case 2:
+			_render->setOverlayBlendColor(255, 0, 0);
+			_conradHit = 1;
+			break;
+		case 1:
+			_conradHit = 0;
+			break;
+		}
+	}
+	updatePlayerObject();
+	redrawScene();
+	addObjectsToScene();
+	updateObjects();
+	clearObjectsDrawList();
+	_render->setupProjection(kProj2D);
+	_render->setIgnoreDepth(true);
+	if (!_params.touchMode) {
+		drawInfoPanel();
+	}
+	if (_mainLoopCurrentMode == 0) {
+		updateScreen();
+	}
+	else if (_mainLoopCurrentMode == 1) {
+		if (_objectsPtrTable[kObjPtrScan]) {
+			updateScanner();
+		}
+		if ((_objectsPtrTable[kObjPtrConrad]->specialData[1][20] & 15) == 5) {
+			_objectsPtrTable[kObjPtrConrad]->specialData[1][18] -= 2;
+			if (_objectsPtrTable[kObjPtrConrad]->specialData[1][18] < 2) {
+				_objectsPtrTable[kObjPtrConrad]->specialData[1][18] = 2;
+				while (_objectsPtrTable[kObjPtrShield]->specialData[1][22] != 0) {
+					GameObject* o_tmp = _objectsPtrTable[kObjPtrShield];
+					while (o_tmp->o_next) {
+						o_tmp = o_tmp->o_next;
+					}
+					o_tmp->o_next = _objectsPtrTable[kObjPtrShield];
+					_objectsPtrTable[kObjPtrInventaire]->o_child->o_next->o_next->o_next->o_child = _objectsPtrTable[kObjPtrShield]->o_next;
+					_objectsPtrTable[kObjPtrShield]->o_next = 0;
+					_objectsPtrTable[kObjPtrShield] = _objectsPtrTable[kObjPtrInventaire]->o_child->o_next->o_next->o_next->o_child;
+				}
+				if (_objectsPtrTable[kObjPtrShield]) {
+					_varsTable[25] = _objectsPtrTable[kObjPtrShield]->objKey;
+					if (getMessage(_objectsPtrTable[kObjPtrShield]->objKey, 0, &_tmpMsg)) {
+						_objectsPtrTable[kObjPtrShield]->text = (const char*)_tmpMsg.data;
+					}
+				}
+				setObjectData(_objectsPtrTable[kObjPtrConrad], 20, 0);
+			}
+		}
+		if (_objectsPtrTable[kObjPtrShield]->specialData[1][22] == 2) {
+			_objectsPtrTable[kObjPtrConrad]->specialData[1][18] -= 1;
+			if (_objectsPtrTable[kObjPtrConrad]->specialData[1][18] < 1) {
+				_objectsPtrTable[kObjPtrConrad]->specialData[1][18] = 1;
+				while (_objectsPtrTable[kObjPtrShield]->specialData[1][22] != 0) {
+					GameObject* o_tmp = _objectsPtrTable[kObjPtrShield];
+					while (o_tmp->o_next) {
+						o_tmp = o_tmp->o_next;
+					}
+					o_tmp->o_next = _objectsPtrTable[kObjPtrShield];
+					_objectsPtrTable[kObjPtrInventaire]->o_child->o_next->o_next->o_next->o_child = _objectsPtrTable[kObjPtrShield]->o_next;
+					_objectsPtrTable[kObjPtrShield]->o_next = 0;
+					_objectsPtrTable[kObjPtrShield] = _objectsPtrTable[kObjPtrInventaire]->o_child->o_next->o_next->o_next->o_child;
+				}
+				if (_objectsPtrTable[kObjPtrShield]) {
+					_varsTable[25] = _objectsPtrTable[kObjPtrShield]->objKey;
+					if (getMessage(_objectsPtrTable[kObjPtrShield]->objKey, 0, &_tmpMsg)) {
+						_objectsPtrTable[kObjPtrShield]->text = (const char*)_tmpMsg.data;
+					}
+				}
+			}
+		}
+		if (_drawNumber.font != 0) {
+			char buf[32];
+			snprintf(buf, sizeof(buf), "%d", _drawNumber.value);
+			drawString(_drawNumber.x, _drawNumber.y, buf, _drawNumber.font, 0);
+			memset(&_drawNumber, 0, sizeof(_drawNumber));
+		}
+		if (_gameStateMsg != 0) {
+			int32_t argv[] = { _objectsPtrTable[kObjPtrWorld]->objKey, _gameStateMsg };
+			op_addObjectMessage(2, argv);
+			_gameStateMsg = 0;
+		}
+		if (_cut._numToPlayCounter > 0) {
+			--_cut._numToPlayCounter;
+		}
+		if (_changeLevel) {
+			if (g_hasPsx) {
+				// display the inter-level loading screen
+				_res.loadLevelDataPsx(_level, kResTypePsx_VRM);
+				if (_res._vrmLoadingBitmap) {
+					_displayPsxLevelLoadingScreen = 1;
+					displayPsxLevelLoadingScreen();
+				}
+			}
+			else {
+				setPaletteColor(1, 255, 255, 255);
+				if (getMessage(_objectsPtrTable[kObjPtrFadeToBlack]->objKey, 1, &_tmpMsg)) { // "Loading..."
+					memset(&_drawCharBuf, 0, sizeof(_drawCharBuf));
+					int w, h;
+					getStringRect((const char*)_tmpMsg.data, kFontNameCineTypo, &w, &h);
+					drawString((kScreenWidth - w) / 2, kScreenHeight / 2, (const char*)_tmpMsg.data, kFontNameCineTypo, 0);
+				}
+			}
+		}
+		else if (!_endGame) {
 			updateScreen();
 		}
 		if (currentRoom != _room) {
@@ -2991,9 +3150,9 @@ void Game::addObjectsToScene() {
 		SpriteImage *spr = &so->spr;
 		const uint8_t *texData = _spriteCache.getData(spr->key, spr->data);
 		const int scale = (flags & 0x20000) != 0 ? 2 : 1;
-		const int x0 = -scale * spr->w / 2;
+		const int x0 = -scale * spr->w / 1;
 		const int y0 = -scale * spr->h / 2;
-		const int x1 = x0 + scale * spr->w;
+		const int x1 = x0 + scale * spr->w*2;
 		const int y1 = y0 + scale * spr->h;
 		Vertex v[4];
 		v[0].x = x0; v[0].y = y0; v[0].z = 0;
@@ -3117,7 +3276,7 @@ void Game::drawSceneObjectMesh(SceneObject *so, int flags) {
 			}
 		}
 		if (flags & 0x40000) {
-			const int y = (kGroundY << 15) + (polygonPoints[0].y << 1);
+			const int y = (kGroundY << 15) + (polygonPoints[0].y * 2);
 			addParticleBlob(so, polygonPoints[0].x, y, polygonPoints[0].z, 5, 6, color & 255);
 		}
 		int fill = (color >> 8) & 31;

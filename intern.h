@@ -10,8 +10,14 @@
 #define ARRAYSIZE(a) (sizeof(a)/sizeof(a[0]))
 
 struct Vertex {
-	int x, y, z;
-	int nx, ny, nz;
+	float x, y, z; // current position
+	float prev_x, prev_y, prev_z; // previous position
+	float nx, ny, nz; // normal
+	int id; // New field
+};
+struct VertexWithId {
+	Vertex vertex;
+	int id;
 };
 
 inline int sext32(int x, int bits) {

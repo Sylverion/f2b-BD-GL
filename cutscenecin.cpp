@@ -15,7 +15,7 @@ enum {
 	kSubtitleMessagesCount = 16,
 	kCutsceneFrameDelay = 1000 / 12,
 	kCutsceneDisplayWidth = 320,
-	kCutsceneDisplayHeight = 200,
+	kCutsceneDisplayHeight = 160,
 };
 
 struct CinFileHeader {

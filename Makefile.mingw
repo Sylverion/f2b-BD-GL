@@ -50,7 +50,7 @@ pdb:
 	
 strip:
 	$(STRIP) $(NAME)
-	$(UPX) -9 $(NAME)
+	#$(UPX) -9 $(NAME)
 	
 	
 package:

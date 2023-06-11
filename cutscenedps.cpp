@@ -12,7 +12,7 @@ enum {
 	kVideoDataSize = 2016,
 	kVideoHeaderSize = 56,
 	kCutscenePsxVideoWidth = 320,
-	kCutscenePsxVideoHeight = 240,
+	kCutscenePsxVideoHeight = 160,
 };
 
 struct DpsHeader {

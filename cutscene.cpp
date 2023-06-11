@@ -55,6 +55,7 @@ bool Cutscene::isInterrupted() const {
 }
 
 void Cutscene::queue(int num, int counter) {
+	
 	debug(kDebug_CUTSCENE, "Cutscene::queue() num %d counter %d", num, counter);
 	if (_numToPlay < 0) {
 		_numToPlay = num;
