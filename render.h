@@ -33,12 +33,18 @@ struct RenderParams {
 	const char *textureFilter;
 	const char *textureScaler;
 };
-
+struct Vector3f {
+	float x, y, z;
+	Vector3f(float x = 0, float y = 0, float z = 0) : x(x), y(y), z(z) {}
+};
 struct Render {
 	std::unordered_set<int16_t> savedTextures;
 	void checkAndSaveTexture(int16_t texKey, const uint8_t* texData, int texW, int texH);
 	uint8_t _clut[256 * 3];
 	int _w, _h;
+	Vector3f _targetCameraPos;  // New variable for target camera position
+	float _targetCameraPitch;  // New variable for target camera pitch
+
 	float _aspectRatio;
 	float _fov;
 	uint8_t *_screenshotBuf;
@@ -72,7 +78,8 @@ struct Render {
 
 	void setCameraPos(int x, int y, int z, int shift = 0);
 	void setCameraPitch(int a);
-
+	void updateCameraPitch();
+	void updateCameraPos();
 	bool hasTexture(int16_t key);
 	void prepareTextureLut(const uint8_t *data, int w, int h, const uint8_t *clut, int16_t texKey);
 	void prepareTextureRgb(const uint8_t *data, int w, int h, int16_t texKey);

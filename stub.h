@@ -56,7 +56,7 @@ struct GameStub {
 	virtual void queueTouchInput(int pointer, int x, int y, int down) = 0;
 	virtual void doTick(unsigned int ticks) = 0;
 	virtual void initGL(int w, int h, float *ar) = 0;
-	virtual void drawGL() = 0;
+	virtual void drawGL(unsigned int ticks) = 0;
 	virtual void loadState(int slot) = 0;
 	virtual void saveState(int slot) = 0;
 	virtual void takeScreenshot() = 0;

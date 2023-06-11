@@ -10,6 +10,7 @@
 #include "sound.h"
 #include "render.h"
 #include "stub.h"
+#include <GL/gl.h> // or use <GL/glew.h> if you're using GLEW
 
 static const char *USAGE =
 	"Fade2Black/OpenGL\n"
@@ -313,7 +314,7 @@ struct GameStub_F2B : GameStub {
 		return _displayMode;
 	}
 	virtual float getAspectRatio(bool widescreen) {
-		return 4 / 3.;
+		return 16 / 9.;
 	}
 	virtual bool hasCursor() {
 		return _params.mouseMode || _params.touchMode;
@@ -368,6 +369,7 @@ struct GameStub_F2B : GameStub {
 		_g->_snd._mix._lock = lock;
 		return mix;
 	}
+
 	virtual void queueKeyInput(int keycode, int pressed) {
 		switch (keycode) {
 		case kKeyCodeLeft:
@@ -462,6 +464,7 @@ struct GameStub_F2B : GameStub {
 		_nextState = _state;
 		switch (_state) {
 		case kStateCutscene:
+
 			if (!_g->updateCutscene(ticks)) {
 				const int cutsceneNum = _g->_cut.changeToNext();
 				if (_g->_cut._numToPlay < 0) {
@@ -479,7 +482,8 @@ struct GameStub_F2B : GameStub {
 			if (_g->_changeLevel) {
 				_g->_changeLevel = false;
 				_g->initLevel(true);
-			} else if (_g->_endGame) {
+			}
+			else if (_g->_endGame) {
 				_g->_endGame = false;
 				_g->initLevel();
 			}
@@ -493,12 +497,15 @@ struct GameStub_F2B : GameStub {
 			if (_g->inp.inventoryKey) {
 				_g->inp.inventoryKey = false;
 				_nextState = kStateInventory;
-			} else if (_g->inp.escapeKey) {
+			}
+			else if (_g->inp.escapeKey) {
 				_g->inp.escapeKey = false;
 				_nextState = kStateMenu;
-			} else if (_g->_cut._numToPlay >= 0 && _g->_cut._numToPlayCounter == 0) {
+			}
+			else if (_g->_cut._numToPlay >= 0 && _g->_cut._numToPlayCounter == 0) {
 				_nextState = kStateCutscene;
-			} else if (_g->_cabinetItemCount != 0) {
+			}
+			else if (_g->_cabinetItemCount != 0) {
 				_nextState = kStateCabinet;
 			}
 			break;
@@ -539,8 +546,41 @@ struct GameStub_F2B : GameStub {
 	virtual void initGL(int w, int h, float *ar) {
 		_render->resizeScreen(w, h, ar, _fov);
 	}
-	virtual void drawGL() {
+	virtual void drawGL(unsigned int ticks) {
 		_render->drawOverlay();
+
+		switch (_state) {
+		case kStateGame:
+			_g->doTickrender();
+			_render->updateCameraPos(); // Call updateCameraPos method
+			_render->updateCameraPitch(); // Call updateCameraPitch method
+			break;
+		case kStateInventory:
+			_g->updateInventoryInput();
+			_g->doInventory();
+			if (_g->inp.inventoryKey || _g->inp.escapeKey) {
+				_g->inp.inventoryKey = false;
+				_g->inp.escapeKey = false;
+				_g->closeInventory();
+				_nextState = kStateGame;
+			}
+			break;
+		case kStateCabinet:
+			_g->doCabinet();
+			if (_g->_cabinetItemCount == 0) {
+				_nextState = kStateGame;
+			}
+			break;
+		case kStateMenu:
+			if (!_g->doMenu()) {
+				_nextState = kStateGame;
+			}
+			if (_g->inp.escapeKey) {
+				_g->inp.escapeKey = false;
+				_nextState = kStateGame;
+			}
+			break;
+		}
 		if (_loadState) {
 			if (_state == kStateGame) {
 				if (_g->loadGameState(_slotState)) {

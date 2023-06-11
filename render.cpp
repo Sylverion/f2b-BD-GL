@@ -12,6 +12,7 @@
 #include <SDL_opengl.h>
 #endif
 #include <math.h>
+#include <cmath> // for fmod and fabs
 #include <sys/time.h>
 #include "render.h"
 #include "texturecache.h"
@@ -27,6 +28,7 @@ static const GLfloat _lightPosition[4] = { 0., .6, 0., 0. };
 static const GLfloat _lightAmbient[4]  = { .2, .2, .2, 1. };
 static const GLfloat _lightDiffuse[4]  = { 1., 1., 1., 1. };
 static const GLfloat _lightSpecular[4] = { 1., 1., 1., 1. };
+
 
 struct Vertex3f {
 	GLfloat x, y, z;
@@ -157,14 +159,14 @@ struct timeval _frameTimeStamp;
 
 Render::Render(const RenderParams *params) {
 	memset(_clut, 0, sizeof(_clut));
-	_aspectRatio = 1.;
+	_aspectRatio = 1.778;
 	_fov = 0;
 	_screenshotBuf = 0;
 	memset(&_overlay, 0, sizeof(_overlay));
 	_overlay.r = _overlay.g = _overlay.b = 255;
 	_viewport.changed = true;
-	_viewport.wScale = 253;
-	_viewport.hScale = 300;
+	_viewport.wScale = 256;
+	_viewport.hScale = 256;
 	_textureCache.init(params->textureFilter, params->textureScaler);
 	_paletteGreyScale = false;
 	_paletteRgbScale = 256;
@@ -172,7 +174,7 @@ Render::Render(const RenderParams *params) {
 	_lighting = params->gouraud;
 	_drawObjectIgnoreDepth = false;
 	gettimeofday(&_frameTimeStamp, 0);
-	_framesCount = 6;
+	_framesCount = 0;
 	_framesPerSec = 60;
 
 	glEnable(GL_BLEND);
@@ -223,13 +225,55 @@ void Render::resizeScreen(int w, int h, float *p, int fov) {
 
 void Render::setCameraPos(int x, int y, int z, int shift) {
 	const GLfloat div = 1 << shift;
-	_cameraPos.x = x / div;
-	_cameraPos.z = z / div;
-	_cameraPos.y = y / div+1;
+
+	// This is the position you want the camera to be at
+	_targetCameraPos.x = x / div;
+	_targetCameraPos.z = z / div;
+	_targetCameraPos.y = y / div;
 }
 
+// This function should be called every frame
+void Render::updateCameraPos() {
+	const float interpolationFactor = .25f; // You can adjust this value to change the speed of the camera movement
+
+	_cameraPos.x = _cameraPos.x + (_targetCameraPos.x - _cameraPos.x) * interpolationFactor;
+	_cameraPos.z = _cameraPos.z + (_targetCameraPos.z - _cameraPos.z) * interpolationFactor;
+	_cameraPos.y = _cameraPos.y + (_targetCameraPos.y - _cameraPos.y) * interpolationFactor;
+}
+
+
 void Render::setCameraPitch(int ry) {
-	_cameraPitch = ry * 360 / 1024.;
+	// This is the pitch you want the camera to be at
+	_targetCameraPitch = fmod(ry * 360 / 1024., 360.);
+	if (_targetCameraPitch < 0) {
+		_targetCameraPitch += 360;
+	}
+	//printf("Target Camera Pitch: %f\n", _targetCameraPitch);
+}
+
+// This function should be called every frame
+void Render::updateCameraPitch() {
+	const float interpolationFactor = .25f; // You can adjust this value to change the speed of the camera movement
+
+	float diff = _targetCameraPitch - _cameraPitch;
+
+	// Adjust diff to take the shortest path
+	if (fabs(diff) > 180) {
+		if (diff > 0) {
+			diff -= 360;
+		}
+		else {
+			diff += 360;
+		}
+	}
+
+	_cameraPitch = _cameraPitch + diff * interpolationFactor;
+
+	// Keep _cameraPitch within [0, 360)
+	_cameraPitch = fmod(_cameraPitch, 360.);
+	if (_cameraPitch < 0) {
+		_cameraPitch += 360;
+	}
 }
 
 bool Render::hasTexture(int16_t key) {
@@ -321,6 +365,7 @@ void Render::checkAndSaveTexture(int16_t texKey, const uint8_t* texData, int tex
 		savedTextures.insert(texKey);
 	}
 }
+bool checkAndSaveTextureEnabled = false;
 void Render::drawPolygonTexture(const Vertex *vertices, int verticesCount, int primitive, const uint8_t *texData, int texW, int texH, int16_t texKey) {
 	assert(vertices && verticesCount >= 4);
 	glColor4ub(255, 255, 255, 255);
@@ -330,7 +375,9 @@ void Render::drawPolygonTexture(const Vertex *vertices, int verticesCount, int p
 	const GLfloat tx = t->u;
 	const GLfloat ty = t->v;
 
-	checkAndSaveTexture(texKey, texData, texW, texH);
+	if (checkAndSaveTextureEnabled) {
+		checkAndSaveTexture(texKey, texData, texW, texH);
+	}
 
 	switch (primitive) {
 	case 0:
@@ -339,7 +386,7 @@ void Render::drawPolygonTexture(const Vertex *vertices, int verticesCount, int p
 		// 1:::2
 		// :   :
 		// 4:::3
-		//
+		// walls and Sprites events HUD
 		{
 			GLfloat uv[] = { 0., 0., tx, 0., tx, ty, 0., ty };
 			emitQuadTex3i(vertices, uv);
@@ -385,7 +432,7 @@ void Render::drawPolygonTexture(const Vertex *vertices, int verticesCount, int p
 		// 3:::4
 		// :   :
 		// 2:::1
-		//
+		//Skybox
 		{
 			GLfloat uv[] = { tx, ty, 0., ty, 0., 0., tx, 0. };
 			emitQuadTex3i(vertices, uv);
@@ -408,7 +455,7 @@ void Render::drawPolygonTexture(const Vertex *vertices, int verticesCount, int p
 		// 2:::3
 		// :   :
 		// 1:::4
-		//
+		//Grounds
 		{
 			GLfloat uv[] = { 0., 0., 0., ty, tx, ty, tx, 0. };
 			emitQuadTex3i(vertices, uv);
@@ -452,7 +499,7 @@ void Render::drawParticle(const Vertex *pos, int color) {
 			warning("Render::drawParticle() unhandled color %d", color);
 		}
 	}
-	glPointSize(4.);
+	glPointSize(8.);
 	emitPoint3i(pos);
 	glPointSize(1.);
 }
@@ -586,6 +633,8 @@ void Render::clearScreen() {
 	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 #endif
 	if (_viewport.changed) {
+		//printf("test\n");
+
 		_viewport.changed = false;
 		const int vw = _viewport.w * _viewport.wScale >> 8;
 		const int vh = _viewport.h * _viewport.hScale >> 8;
@@ -596,10 +645,12 @@ void Render::clearScreen() {
 }
 
 void Render::setupProjection(int mode) {
+
 	const GLfloat aspect = 1.778 * _aspectRatio;
 
 	switch (mode) {
 	case kProj2D:
+
 		glMatrixMode(GL_PROJECTION);
 		glLoadIdentity();
 		glOrtho(-1. / _aspectRatio, 1. / _aspectRatio, kOverlayHeight, 0, 0, 1);
@@ -722,13 +773,13 @@ void Render::drawOverlay() {
 
 	++_framesCount;
 	
-	if ((_framesCount & 31) == 0) {
+	if ((_framesCount & 61) == 0) {
 		struct timeval t1;
 		gettimeofday(&t1, 0);
 		const int msecs = (t1.tv_sec - _frameTimeStamp.tv_sec) * 1000 + (t1.tv_usec - _frameTimeStamp.tv_usec) / 1000;
 		_frameTimeStamp = t1;
 		if (msecs != 0) {
-			_framesPerSec = (int)(1000. * 32 / msecs);
+			_framesPerSec = (int)(1000. * 62 / msecs);
 			
 		}
 	}
