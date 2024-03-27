@@ -13,7 +13,7 @@
 #include <thread>
 #include <chrono>
 
-Game::Game(Render *render, const GameParams *params)
+Game::Game(Render* render, const GameParams* params)
 	: _snd(&_res), _cut(render, this, &_snd), _render(render), _params(*params) {
 
 	_gameStateMsg = 0;
@@ -107,7 +107,8 @@ void Game::clearLevelData() {
 		_cameraStandingDist = 1;
 		_cameraUsingGunDist = 0;
 		_conradUsingGun = false;
-	} else {
+	}
+	else {
 		_cameraDefaultDist = 0;
 		_cameraStandingDist = 0;
 		_cameraUsingGunDist = 0;
@@ -155,11 +156,11 @@ void Game::clearLevelData() {
 
 void Game::freeLevelData() {
 	for (int i = 0; i < ARRAYSIZE(_objectKeysTable); ++i) {
-		GameObject *o = _objectKeysTable[i];
+		GameObject* o = _objectKeysTable[i];
 		if (o) {
-			GameMessage *msg = o->msg;
+			GameMessage* msg = o->msg;
 			while (msg) {
-				GameMessage *next = msg->next;
+				GameMessage* next = msg->next;
 				free(msg);
 				msg = next;
 			}
@@ -168,9 +169,9 @@ void Game::freeLevelData() {
 	}
 	for (int x = 0; x < kMapSizeX; ++x) {
 		for (int z = 0; z < kMapSizeZ; ++z) {
-			CollisionSlot *slot = _sceneCellMap[x][z].colSlot;
+			CollisionSlot* slot = _sceneCellMap[x][z].colSlot;
 			while (slot) {
-				CollisionSlot *next = slot->next;
+				CollisionSlot* next = slot->next;
 				free(slot);
 				slot = next;
 			}
@@ -181,8 +182,8 @@ void Game::freeLevelData() {
 void Game::countObjects(int16_t parentKey) {
 	int16_t key;
 
-	uint8_t *p = _res.getData(kResType_OBJ, parentKey, "OBJ");
-	const char *name = (const char *)p + 232;
+	uint8_t* p = _res.getData(kResType_OBJ, parentKey, "OBJ");
+	const char* name = (const char*)p + 232;
 	_res.setObjectKey(name, parentKey);
 
 	++_objectsCount;
@@ -197,8 +198,8 @@ void Game::countObjects(int16_t parentKey) {
 }
 
 int Game::gotoStartScriptAnim() {
-	GameObject *o = _currentObject;
-	GameObjectAnimation *anim = &o->anim;
+	GameObject* o = _currentObject;
+	GameObjectAnimation* anim = &o->anim;
 	if (o->scriptCondData == 0) {
 		warning("Game::gotoStartScriptAnim() object '%s' has no condition data", o->name);
 		return 1;
@@ -225,11 +226,12 @@ int Game::gotoStartScriptAnim() {
 				break;
 			}
 			const int frameNum = o->specialData[1][4 + i];
-			SceneAnimation *sa = &_sceneAnimationsTable[index];
+			SceneAnimation* sa = &_sceneAnimationsTable[index];
 			sa->type &= ~2;
 			if (!_res.getNext(kResType_ANI, o->anim.currentAnimKey)) {
 				sa->type |= 0xC;
-			} else {
+			}
+			else {
 				sa->type |= 0xE;
 			}
 			sa->frameNum = frameNum;
@@ -237,8 +239,10 @@ int Game::gotoStartScriptAnim() {
 			sa->msg = 71;
 			sa->msgKey = o->objKey;
 		}
-	} else if (o->flags[1] & 0x80) {
-	} else if (o->flags[1] & 0x8) {
+	}
+	else if (o->flags[1] & 0x80) {
+	}
+	else if (o->flags[1] & 0x8) {
 		int16_t cond_dx = (int8_t)o->scriptCondData[7];
 		int16_t cond_dy = (int8_t)o->scriptCondData[8];
 		int16_t cond_dz = (int8_t)o->scriptCondData[9];
@@ -255,12 +259,12 @@ int Game::gotoStartScriptAnim() {
 
 int Game::gotoNextScriptAnim() {
 	int16_t nextKey;
-	GameObject *o = _currentObject;
-	GameObjectAnimation *anim = &o->anim;
+	GameObject* o = _currentObject;
+	GameObjectAnimation* anim = &o->anim;
 	if (anim->anikeyfData == 0) {
 		anim->anikeyfData = _res.getData(kResType_ANI, anim->currentAnimKey, "ANIKEYF");
 	}
-	uint8_t *p_anikeyf = anim->anikeyfData;
+	uint8_t* p_anikeyf = anim->anikeyfData;
 	if (anim->ticksCount >= p_anikeyf[0] - 1) {
 		nextKey = _res.getNext(kResType_ANI, anim->currentAnimKey);
 		if (nextKey == 0) {
@@ -272,7 +276,8 @@ int Game::gotoNextScriptAnim() {
 		p_anikeyf = anim->anikeyfData;
 		++anim->framesCount;
 		anim->ticksCount = 0;
-	} else {
+	}
+	else {
 		++anim->ticksCount;
 		nextKey = anim->currentAnimKey;
 	}
@@ -300,7 +305,7 @@ int Game::gotoNextScriptAnim() {
 }
 
 void Game::gotoEndScriptAnim(int fl) {
-	GameObject *o = _currentObject;
+	GameObject* o = _currentObject;
 	while (o->anim.anikeyfData) {
 		int16_t nextKey = _res.getNext(kResType_ANI, o->anim.currentAnimKey);
 		if (nextKey == 0) {
@@ -319,7 +324,7 @@ void Game::gotoEndScriptAnim(int fl) {
 int16_t Game::getObjectScriptAnimKey(int16_t groupKey, int num) {
 	int16_t animKey = _res.getChild(kResType_ANI, groupKey);
 	while (animKey != 0) {
-		const uint8_t *p = _res.getData(kResType_ANI, animKey, "ANIHEAD");
+		const uint8_t* p = _res.getData(kResType_ANI, animKey, "ANIHEAD");
 		if (p && num == READ_LE_UINT16(p + 14)) {
 			return animKey;
 		}
@@ -328,37 +333,39 @@ int16_t Game::getObjectScriptAnimKey(int16_t groupKey, int num) {
 	return 0;
 }
 
-void Game::setObjectFlags(const uint8_t *p, GameObject *o) {
+void Game::setObjectFlags(const uint8_t* p, GameObject* o) {
 	for (int i = 0; i <= 18; ++i) {
 		const uint32_t bitmask = 1 << i;
 		if (p[40 + i]) {
 			o->flags[0] |= bitmask;
 			o->flags[1] |= bitmask;
-		} else {
+		}
+		else {
 			o->flags[0] &= ~bitmask;
 			o->flags[1] &= ~bitmask;
 		}
 	}
 }
 
-int Game::getObjectFlag(GameObject *o, int flag) {
+int Game::getObjectFlag(GameObject* o, int flag) {
 	assert(flag >= 96 && flag <= 114);
 	const uint32_t bitmask = 1 << (flag - 96);
 	return (o->flags[1] & bitmask) != 0;
 }
 
-void Game::setObjectFlag(GameObject *o, int flag, int value) {
+void Game::setObjectFlag(GameObject* o, int flag, int value) {
 	assert(flag >= 96 && flag <= 114);
 	const uint32_t bitmask = 1 << (flag - 96);
 	if (value) {
 		o->flags[1] |= bitmask;
-	} else {
+	}
+	else {
 		o->flags[1] &= ~bitmask;
 	}
 }
 
-void Game::setupObjectScriptAnim(GameObject *o) {
-	GameObjectAnimation *anim = &o->anim;
+void Game::setupObjectScriptAnim(GameObject* o) {
+	GameObjectAnimation* anim = &o->anim;
 
 	anim->aniheadData = 0;
 	anim->anikeyfData = 0;
@@ -378,8 +385,8 @@ void Game::setupObjectScriptAnim(GameObject *o) {
 	}
 }
 
-void Game::setupObjectsChangeOrder(GameObject *o) {
-	GameObject *o_prev, *o_cur, *o_tmp;
+void Game::setupObjectsChangeOrder(GameObject* o) {
+	GameObject* o_prev, * o_cur, * o_tmp;
 
 	o_prev = o_cur = o->o_child;
 	if (o_cur->o_next) {
@@ -390,7 +397,8 @@ void Game::setupObjectsChangeOrder(GameObject *o) {
 				o_prev->o_next = o_cur->o_next;
 				o_cur->o_next = o_cur->o_parent->o_child;
 				o_cur->o_parent->o_child = o_cur;
-			} else {
+			}
+			else {
 				o_prev = o_cur;
 			}
 			o_cur = o_tmp;
@@ -399,7 +407,7 @@ void Game::setupObjectsChangeOrder(GameObject *o) {
 }
 
 static const struct {
-	const char *name;
+	const char* name;
 	int index;
 } _gameObjectsPtrinitTable[] = {
 	{ "conrad", kObjPtrConrad },
@@ -416,30 +424,33 @@ static const struct {
 	{ "fade_to_black", kObjPtrFadeToBlack }
 };
 
-GameObject *Game::setupObjectsHelper(int16_t prevKey, GameObject *o_parent) {
+GameObject* Game::setupObjectsHelper(int16_t prevKey, GameObject* o_parent) {
 	int16_t childKey, key;
-	GameObject *o_prev, *o_new = 0;
+	GameObject* o_prev, * o_new = 0;
 	bool hasNext = false;
 
 	if (prevKey == 0) {
 		key = _res.getRoot(kResType_OBJ);
-	} else {
+	}
+	else {
 		key = prevKey;
 	}
 	assert(key != 0);
 	do {
 		++_objectsSetupCount;
-		uint8_t *p = _res.getData(kResType_OBJ, key, "OBJ");
+		uint8_t* p = _res.getData(kResType_OBJ, key, "OBJ");
 		o_prev = o_new;
 		if (prevKey == 0) {
 			o_new = o_parent;
-		} else {
+		}
+		else {
 			o_new = _currentObject + 1;
 		}
 		_currentObject = o_new;
 		if (hasNext) {
 			o_prev->o_next = o_new;
-		} else {
+		}
+		else {
 			o_parent->o_child = o_new;
 		}
 		if (!o_parent) {
@@ -448,18 +459,20 @@ GameObject *Game::setupObjectsHelper(int16_t prevKey, GameObject *o_parent) {
 		o_new->o_parent = o_parent;
 		o_new->objKey = key;
 		o_new->scriptKey = READ_LE_UINT16(p);
-		o_new->name = (const char *)p + 232;
+		o_new->name = (const char*)p + 232;
 		if (strcmp(o_new->name, "conrad") == 0) {
 			_conradObjectKey = key;
-		} else if (strcmp(o_new->name, "world") == 0) {
+		}
+		else if (strcmp(o_new->name, "world") == 0) {
 			_worldObjectKey = key;
 		}
 		if (p[48]) {
 			o_new->anim.animKey = READ_LE_UINT16(p + 2);
-		} else {
+		}
+		else {
 			o_new->startScriptKey = READ_LE_UINT16(p + 2);
 			if (o_new->scriptKey != 0) {
-				uint8_t *q = _res.getData(kResType_STM, o_new->scriptKey, "STMHEADE");
+				uint8_t* q = _res.getData(kResType_STM, o_new->scriptKey, "STMHEADE");
 				o_new->anim.animKey = getObjectScriptAnimKey(READ_LE_UINT16(q), READ_LE_UINT16(p + 4));
 			}
 		}
@@ -520,8 +533,9 @@ GameObject *Game::setupObjectsHelper(int16_t prevKey, GameObject *o_parent) {
 		}
 		o_new->updateColliding = false;
 		if (getMessage(o_new->objKey, 32767, &_tmpMsg)) {
-			o_new->text = (const char *)_tmpMsg.data;
-		} else {
+			o_new->text = (const char*)_tmpMsg.data;
+		}
+		else {
 			o_new->text = o_new->name;
 		}
 		if ((o_new->flags[1] & 0x100) == 0) {
@@ -544,7 +558,7 @@ GameObject *Game::setupObjectsHelper(int16_t prevKey, GameObject *o_parent) {
 			_yPosViewpoint = _y0PosViewpoint = o_new->yPos;
 			_zPosViewpoint = _z0PosViewpoint = o_new->zPos;
 			_yRotObserver = o_new->pitch;
-			int cosy =  g_cos[_yRotObserver & 1023];
+			int cosy = g_cos[_yRotObserver & 1023];
 			int siny = -g_sin[_yRotObserver & 1023];
 			_xPosObserver = _xPosViewpoint - fixedMul(cosy, _cameraDist, 15);
 			_zPosObserver = _zPosViewpoint - fixedMul(siny, _cameraDist, 15);
@@ -555,13 +569,14 @@ GameObject *Game::setupObjectsHelper(int16_t prevKey, GameObject *o_parent) {
 		o_new->xPosParentPrev = o_new->xPosParent = o_parent->xPosParent + o_parent->xPos;
 		o_new->yPosParentPrev = o_new->yPosParent = o_parent->yPosParent + o_parent->yPos;
 		o_new->zPosParentPrev = o_new->zPosParent = o_parent->zPosParent + o_parent->zPos;
-		assert(o_new->objKey >= 0 && o_new->objKey < kObjectKeysTableSize && _objectKeysTable[o_new->objKey] == 0);
+		assert(o_new->objKey >= 0 && o_new->objKey < kObjectKeysTableSize&& _objectKeysTable[o_new->objKey] == 0);
 		_objectKeysTable[o_new->objKey] = o_new;
 		childKey = _res.getChild(kResType_OBJ, key);
 		if (childKey != 0) {
 			setupObjectsHelper(childKey, o_new);
 			setupObjectsChangeOrder(o_new);
-		} else {
+		}
+		else {
 			o_new->o_child = 0;
 		}
 
@@ -581,7 +596,7 @@ void Game::setupObjects() {
 	countObjects(_res.getRoot(kResType_OBJ));
 	debug(kDebug_GAME, "Game::setupObjects() _objectsCount=%d", _objectsCount);
 
-	GameObject *o_world = ALLOC<GameObject>(_objectsCount);
+	GameObject* o_world = ALLOC<GameObject>(_objectsCount);
 
 	_objectsSetupCount = 0;
 	_inputsCount = 0;
@@ -601,10 +616,10 @@ void Game::setupObjects() {
 	free(_inputsTable);
 	_inputsTable = 0;
 	if (_inputsCount != 0) {
-		_inputsTable = (GameInput *)calloc(_inputsCount, sizeof(GameInput));
+		_inputsTable = (GameInput*)calloc(_inputsCount, sizeof(GameInput));
 		if (_inputsTable) {
 			for (int i = 0; i < _inputsCount; ++i) {
-				GameInput *inp = &_inputsTable[i];
+				GameInput* inp = &_inputsTable[i];
 				memset(inp, 0, sizeof(GameInput));
 				inp->inputKey0 = 0;
 				inp->inputKey1 = 1;
@@ -613,7 +628,7 @@ void Game::setupObjects() {
 	}
 
 	for (int i = 0; i < kRoomsTableSize; ++i) {
-		GameRoom *room = &_roomsTable[i];
+		GameRoom* room = &_roomsTable[i];
 		if (room->palKey != 0) {
 			debug(kDebug_GAME, "Game::setupObjects() room %d '%s' keyPal %d", i, room->o->name, room->palKey);
 			room->palKey = _palKeysTable[room->palKey];
@@ -623,7 +638,7 @@ void Game::setupObjects() {
 
 void Game::getAllPalKeys(int16_t mapKey) {
 	memset(_palKeysTable, 0, sizeof(_palKeysTable));
-	const uint8_t *p = _res.getData(kResType_MAP, mapKey, "MAP3D");
+	const uint8_t* p = _res.getData(kResType_MAP, mapKey, "MAP3D");
 	if (p) {
 		int count = READ_LE_UINT32(p + 28);
 		assert(count >= 0 && count < kPalKeysTableSize);
@@ -637,7 +652,7 @@ void Game::getAllPalKeys(int16_t mapKey) {
 	}
 }
 
-void Game::getSceneAnimationTexture(SceneAnimation *sa, uint16_t *len, uint16_t *flags, SpriteImage *spr) {
+void Game::getSceneAnimationTexture(SceneAnimation* sa, uint16_t* len, uint16_t* flags, SpriteImage* spr) {
 	// seek to the correct frame
 	int16_t key = _res.getChild(kResType_ANI, sa->frmKey);
 	assert(key != 0);
@@ -648,10 +663,10 @@ void Game::getSceneAnimationTexture(SceneAnimation *sa, uint16_t *len, uint16_t 
 			return;
 		}
 	}
-	const uint8_t *p_frm = _res.getData(kResType_ANI, key, "ANIFRAM");
+	const uint8_t* p_frm = _res.getData(kResType_ANI, key, "ANIFRAM");
 	int16_t sprKey = READ_LE_UINT16(p_frm);
 	initSprite(kResType_SPR, sprKey, spr);
-	const uint8_t *p_key = _res.getData(kResType_ANI, sa->frmKey, "ANIKEYF");
+	const uint8_t* p_key = _res.getData(kResType_ANI, sa->frmKey, "ANIKEYF");
 	if (len) {
 		*len = p_key[0];
 	}
@@ -666,7 +681,7 @@ void Game::loadColorMark(int16_t key) {
 		return;
 	}
 	int16_t colorKey = _res.getChild(kResType_PAL, key);
-	const uint8_t *p = _res.getData(kResType_PAL, colorKey, "MRKCOLOR");
+	const uint8_t* p = _res.getData(kResType_PAL, colorKey, "MRKCOLOR");
 	for (int i = 0; i < 260; ++i) {
 		_mrkBuffer[i] = READ_LE_UINT32(p);
 		p += 4;
@@ -682,18 +697,23 @@ void Game::setupIndirectColorPalette() {
 	for (int i = 0; i < 256; ++i) {
 		if (i == 0) {
 			_indirectPalette[kIndirectColorShadow][i] = 0;
-		} else if (i == 255 || i == 254) {
+		}
+		else if (i == 255 || i == 254) {
 			_indirectPalette[kIndirectColorShadow][i] = 255;
-		} else if ((_mrkBuffer[i + 1] & 1) != 0 || (_mrkBuffer[i + 2] & 1) != 0) {
+		}
+		else if ((_mrkBuffer[i + 1] & 1) != 0 || (_mrkBuffer[i + 2] & 1) != 0) {
 			_indirectPalette[kIndirectColorShadow][i] = i;
-		} else {
+		}
+		else {
 			_indirectPalette[kIndirectColorShadow][i] = i + 1;
 		}
 		if (i == 0) {
 			_indirectPalette[kIndirectColorLight][i] = 0;
-		} else if ((_mrkBuffer[i] & 1) != 0 || (_mrkBuffer[i - 1] & 1) != 0) {
+		}
+		else if ((_mrkBuffer[i] & 1) != 0 || (_mrkBuffer[i - 1] & 1) != 0) {
 			_indirectPalette[kIndirectColorLight][i] = i;
-		} else {
+		}
+		else {
 			_indirectPalette[kIndirectColorLight][i] = i - 1;
 		}
 	}
@@ -727,7 +747,7 @@ void Game::setPalette(int16_t key) {
 		warning("Game::setPalette() invalid palette key");
 		return;
 	}
-	const uint8_t *p = _res.getData(kResType_PAL, key, "PALDATA");
+	const uint8_t* p = _res.getData(kResType_PAL, key, "PALDATA");
 	memcpy(_screenPalette, p, 256 * 3);
 	_render->setPalette(p, 0, 256);
 }
@@ -738,7 +758,7 @@ void Game::setPaletteColor(int color, int r, int g, int b) {
 }
 
 void Game::updatePalette() {
-	GameObject *o = _objectsPtrTable[kObjPtrConrad];
+	GameObject* o = _objectsPtrTable[kObjPtrConrad];
 	o->room = getCellMapShr19(o->xPos, o->zPos)->room;
 	int16_t palKey = _roomsTable[o->room].palKey;
 	debug(kDebug_GAME, "Game::updatePalette() room %d palKey %d", o->room, palKey);
@@ -749,7 +769,7 @@ void Game::updatePalette() {
 
 void Game::loadSceneMap(int16_t key) {
 	assert(key != 0);
-	uint8_t *p = _res.getData(kResType_MAP, key, "MAP3D");
+	uint8_t* p = _res.getData(kResType_MAP, key, "MAP3D");
 	_sceneCamerasCount = READ_LE_UINT32(p + 24);
 	_sceneAnimationsCount = READ_LE_UINT32(p + 12);
 	assert(_sceneAnimationsCount < 512);
@@ -758,11 +778,11 @@ void Game::loadSceneMap(int16_t key) {
 	int palettesCount = READ_LE_UINT32(p + 28);
 	debug(kDebug_GAME, "Game::loadSceneMap() key %d cameras %d palettes %d animations %d", key, _sceneCamerasCount, palettesCount, _sceneAnimationsCount);
 	uint32_t dataOffset = READ_LE_UINT32(p);
-	uint8_t *q = _res.getData(kResType_MAP, key, "MAPDATA");
+	uint8_t* q = _res.getData(kResType_MAP, key, "MAPDATA");
 	assert(q == p + dataOffset);
 	for (int x = 0; x < kMapSizeX; ++x) {
 		for (int z = 0; z < kMapSizeZ; ++z) {
-			CellMap *cell = &_sceneCellMap[x][z];
+			CellMap* cell = &_sceneCellMap[x][z];
 			cell->texture[0] = READ_LE_UINT16(q + 2);
 			cell->texture[1] = READ_LE_UINT16(q + 4);
 			cell->data[0] = q[14];
@@ -801,7 +821,7 @@ void Game::loadSceneMap(int16_t key) {
 	q = _res.getData(kResType_MAP, key, "CAMDATA");
 	assert(q == p + dataOffset);
 	for (int i = 0; i < _sceneCamerasCount; ++i) {
-		CameraPosMap *camPos = &_sceneCameraPosTable[i];
+		CameraPosMap* camPos = &_sceneCameraPosTable[i];
 		camPos->x = READ_LE_UINT32(q); q += 4;
 		camPos->z = READ_LE_UINT32(q); q += 4;
 		camPos->ry = READ_LE_UINT32(q); q += 4;
@@ -812,7 +832,7 @@ void Game::loadSceneMap(int16_t key) {
 	q = _res.getData(kResType_MAP, key, "ANIDATA");
 	assert(q == p + dataOffset);
 	for (int i = 0; i < _sceneAnimationsCount; ++i) {
-		SceneAnimation *sa = &_sceneAnimationsTable[i];
+		SceneAnimation* sa = &_sceneAnimationsTable[i];
 		sa->aniKey = READ_LE_UINT16(q + 8);
 		sa->frmKey = READ_LE_UINT16(q + 10);
 		sa->ticksCount = READ_LE_UINT32(q + 12);
@@ -845,10 +865,11 @@ void Game::loadSceneMap(int16_t key) {
 				aniKey = _res.getNext(kResType_ANI, aniKey);
 			}
 			assert(sa->framesCount > 0);
-			SceneAnimationState *sas = &_sceneAnimationsStateTable[i];
+			SceneAnimationState* sas = &_sceneAnimationsStateTable[i];
 			getSceneAnimationTexture(sa, &sas->len, &sas->flags, &_sceneAnimationsTextureTable[i]);
 			sa->pauseTicksCount = sas->len;
-		} else {
+		}
+		else {
 			debug(kDebug_GAME, "Game::loadSceneMap() i %d type 0x%X", i, sa->type);
 			switch (i) {
 			case 0:
@@ -869,7 +890,7 @@ void Game::loadSceneMap(int16_t key) {
 	}
 }
 
-bool Game::updateSceneAnimationsKeyFrame(int rnd, int index, SceneAnimation *sa, SceneAnimationState *sas) {
+bool Game::updateSceneAnimationsKeyFrame(int rnd, int index, SceneAnimation* sa, SceneAnimationState* sas) {
 	int16_t prevFrameIndex = sa->frameIndex;
 	switch (sas->flags & 0x1C) {
 	case 0:
@@ -888,7 +909,8 @@ bool Game::updateSceneAnimationsKeyFrame(int rnd, int index, SceneAnimation *sa,
 		if (sa->pauseTicksCount <= 0) {
 			if (sa->flags != 0) {
 				sa->frameIndex += sa->direction;
-			} else {
+			}
+			else {
 				sa->direction = -sa->direction;
 				sa->frameIndex += sa->direction;
 			}
@@ -908,10 +930,12 @@ bool Game::updateSceneAnimationsKeyFrame(int rnd, int index, SceneAnimation *sa,
 				sa->direction = 1;
 				sa->prevFrame = sa->frameIndex;
 				sa->frameIndex = sa->frame2Index;
-			} else {
+			}
+			else {
 				sa->frameIndex += sa->direction;
 			}
-		} else {
+		}
+		else {
 			--sa->pauseTicksCount;
 			if (sa->pauseTicksCount <= 0) {
 				sa->frameIndex += sa->direction;
@@ -925,7 +949,8 @@ bool Game::updateSceneAnimationsKeyFrame(int rnd, int index, SceneAnimation *sa,
 				sa->direction = sa->flags;
 				sa->flags = 0;
 				sa->frameIndex = sa->prevFrame + sa->direction;
-			} else {
+			}
+			else {
 				sa->frameIndex = 0;
 			}
 		}
@@ -946,7 +971,8 @@ bool Game::updateSceneAnimationsKeyFrame(int rnd, int index, SceneAnimation *sa,
 			sa->direction = sa->flags;
 			sa->flags = 0;
 			sa->frameIndex = sa->prevFrame;
-		} else {
+		}
+		else {
 			sa->frameIndex = 0;
 		}
 	}
@@ -970,7 +996,7 @@ void Game::updateSceneAnimations() {
 		_sceneAnimationsTable[i].type &= ~0x40;
 	}
 	for (int i = 2; i < _sceneAnimationsCount2 + 2; ++i) {
-		SceneAnimation *sa = &_sceneAnimationsTable[i];
+		SceneAnimation* sa = &_sceneAnimationsTable[i];
 		if ((sa->type & 0x20) != 0 || ((sa->type & 4) == 0 && (sa->type & 0x12) == 0x12)) {
 			sa->type |= 0x50;
 			int index = sa->next;
@@ -981,8 +1007,8 @@ void Game::updateSceneAnimations() {
 		}
 	}
 	for (int i = 2; i < _sceneAnimationsCount2 + 2; ++i) {
-		SceneAnimation *sa = &_sceneAnimationsTable[i];
-		SceneAnimationState *sas = &_sceneAnimationsStateTable[i];
+		SceneAnimation* sa = &_sceneAnimationsTable[i];
+		SceneAnimationState* sas = &_sceneAnimationsStateTable[i];
 		if (sa->aniKey == 0) {
 			continue;
 		}
@@ -991,11 +1017,12 @@ void Game::updateSceneAnimations() {
 				sa->frmKey = _res.getChild(kResType_ANI, sa->frm2Key);
 				assert(sa->frmKey != 0);
 				sa->frm2Key = 0;
-				const uint8_t *p_anikeyf = _res.getData(kResType_ANI, sa->frmKey, "ANIKEYF");
+				const uint8_t* p_anikeyf = _res.getData(kResType_ANI, sa->frmKey, "ANIKEYF");
 				assert(p_anikeyf);
 				sa->ticksCount = p_anikeyf[0];
 				getSceneAnimationTexture(sa, 0, 0, &_sceneAnimationsTextureTable[i]);
-			} else if (sa->type & 2) {
+			}
+			else if (sa->type & 2) {
 				if (sa->ticksCount == 1) {
 					int16_t nextKey = _res.getNext(kResType_ANI, sa->frmKey);
 					if (nextKey == 0) {
@@ -1003,7 +1030,7 @@ void Game::updateSceneAnimations() {
 						continue;
 					}
 					sa->frmKey = nextKey;
-					const uint8_t *p_anikeyf = _res.getData(kResType_ANI, sa->frmKey, "ANIKEYF");
+					const uint8_t* p_anikeyf = _res.getData(kResType_ANI, sa->frmKey, "ANIKEYF");
 					assert(p_anikeyf);
 					sa->ticksCount = p_anikeyf[0];
 					getSceneAnimationTexture(sa, 0, 0, &_sceneAnimationsTextureTable[i]);
@@ -1014,7 +1041,8 @@ void Game::updateSceneAnimations() {
 						sa->frameIndex = 0;
 						sa->frmKey = _res.getChild(kResType_ANI, sa->aniKey);
 					}
-				} else {
+				}
+				else {
 					--sa->ticksCount;
 					if (sa->ticksCount == 1) {
 						int16_t nextKey = _res.getChild(kResType_ANI, sa->frmKey);
@@ -1025,7 +1053,8 @@ void Game::updateSceneAnimations() {
 					}
 				}
 			}
-		} else if ((sa->type & 0x12) == 0x12 || (sa->type & 0x20) != 0) {
+		}
+		else if ((sa->type & 0x12) == 0x12 || (sa->type & 0x20) != 0) {
 			if ((sa->type & 1) == 0) {
 				sa->type &= ~0x10;
 			}
@@ -1041,21 +1070,21 @@ void Game::updateSceneAnimations() {
 	}
 }
 
-void Game::getSceneTexture(int16_t key, int framesSkip, SpriteImage *spr) {
+void Game::getSceneTexture(int16_t key, int framesSkip, SpriteImage* spr) {
 	int16_t frameKey = _res.getChild(kResType_ANI, key);
 	for (int i = 0; i < framesSkip; ++i) {
 		frameKey = _res.getNext(kResType_ANI, frameKey);
 	}
 	frameKey = _res.getChild(kResType_ANI, frameKey);
 	assert(frameKey != 0);
-	const uint8_t *p_frm = _res.getData(kResType_ANI, frameKey, "ANIFRAM");
+	const uint8_t* p_frm = _res.getData(kResType_ANI, frameKey, "ANIFRAM");
 	int16_t sprKey = READ_LE_UINT16(p_frm);
 	initSprite(kResType_SPR, sprKey, spr);
 }
 
 void Game::loadSceneTextures(int16_t key) {
 	int16_t texKey = _res.getChild(kResType_MAP, key);
-	const uint8_t *p = _res.getData(kResType_MAP, texKey, "TEX3D");
+	const uint8_t* p = _res.getData(kResType_MAP, texKey, "TEX3D");
 	_sceneTexturesCount = READ_LE_UINT32(p);
 	assert(_sceneTexturesCount < 256);
 
@@ -1063,7 +1092,7 @@ void Game::loadSceneTextures(int16_t key) {
 	memset(_sceneTexturesTable, 0, sizeof(_sceneTexturesTable));
 	p = _res.getData(kResType_MAP, texKey, "TEX3DANI");
 	for (int i = 0; i < _sceneTexturesCount; ++i) {
-		SceneTexture *st = &_sceneTexturesTable[i];
+		SceneTexture* st = &_sceneTexturesTable[i];
 		st->framesCount = READ_LE_UINT32(p);
 		st->key = READ_LE_UINT16(p + 4);
 		p += 8;
@@ -1079,14 +1108,14 @@ void Game::loadSceneTextures(int16_t key) {
 
 void Game::updateSceneTextures() {
 	for (int i = 0; i < _sceneTexturesCount; ++i) {
-		SceneTexture *st = &_sceneTexturesTable[i];
+		SceneTexture* st = &_sceneTexturesTable[i];
 		getSceneTexture(st->key, (_ticks & 0xFFFF) % st->framesCount, &_sceneTextureImagesBuffer[i]);
 	}
 }
 
 void Game::initScene() {
 	loadSceneMap(_mapKey);
-	GameObject *o = _objectsPtrTable[kObjPtrConrad];
+	GameObject* o = _objectsPtrTable[kObjPtrConrad];
 	o->room = getCellMapShr19(o->xPos, o->zPos)->room;
 	debug(kDebug_GAME, "Game::initScene() initial room %d", o->room);
 	_roomsTable[o->room].fl = 1;
@@ -1111,7 +1140,7 @@ void Game::init() {
 	_render->setPaletteScale(_res._userConfig.greyScale != 0, _res._userConfig.lightCoef);
 
 	int dataSize;
-	File *fp = fileOpen("PLAYER.INI", &dataSize, kFileType_DATA);
+	File* fp = fileOpen("PLAYER.INI", &dataSize, kFileType_DATA);
 	_res.loadINI(fp, dataSize);
 	fileClose(fp);
 
@@ -1120,7 +1149,8 @@ void Game::init() {
 	if (midiType == MIDI_GUS) {
 		_res.loadCustomGUS();
 		_snd._mix._xmiPlayer = XmiPlayer_WildMidi_create(&_res);
-	} else {
+	}
+	else {
 		_snd._mix._xmiPlayer = XmiPlayer_FluidSynth_create(_params.sf2);
 	}
 	_snd._mix.setSoundVolume(_res._userConfig.soundOn ? _res._userConfig.soundVolume : 0);
@@ -1172,7 +1202,7 @@ void Game::initLevel(bool keepInventoryObjects) {
 		int dataSize;
 		char name[16];
 		snprintf(name, sizeof(name), "LEVEL%d.DEM", _level);
-		File *fp = fileOpen(name, &dataSize, kFileType_DATA, false);
+		File* fp = fileOpen(name, &dataSize, kFileType_DATA, false);
 		if (!fp) {
 			snprintf(name, sizeof(name), "LEVEL%d.DE_", _level);
 			fp = fileOpen(name, &dataSize, kFileType_DATA, false);
@@ -1236,7 +1266,7 @@ void Game::initLevel(bool keepInventoryObjects) {
 	initScene();
 
 	setupConradObject();
-	GameObject *o = getObjectByKey(_cameraViewKey);
+	GameObject* o = getObjectByKey(_cameraViewKey);
 	changeRoom(o->room);
 	_roomPrev = _room = o->room;
 	_endGame = false;
@@ -1258,7 +1288,7 @@ void Game::initLevel(bool keepInventoryObjects) {
 }
 
 void Game::setupConradObject() {
-	GameObject *o = getObjectByKey(_conradObjectKey);
+	GameObject* o = getObjectByKey(_conradObjectKey);
 	_objectsPtrTable[kObjPtrObject1] = _objectsPtrTable[kObjPtrObject2] = o;
 	_cameraViewKey = o->objKey;
 	_cameraViewObj = 1;
@@ -1284,7 +1314,8 @@ void Game::playMusic(int mode) {
 	if (mode == 1) {
 		const int num = _roomsTable[_objectsPtrTable[kObjPtrConrad]->room].o->customData[mode];
 		_snd._musicKey = _res._musicKeysTable[_res._levelDescriptionsTable[_level].musicKeys[num]];
-	} else if (mode == 3) {
+	}
+	else if (mode == 3) {
 		if (_objectsPtrTable[kObjPtrMusic]->specialData[1][21] == 67108864) {
 			switch (_objectsPtrTable[kObjPtrMusic]->specialData[1][22]) {
 			case 1:
@@ -1294,9 +1325,11 @@ void Game::playMusic(int mode) {
 				_snd._musicKey = _res._musicKeysTable[_res._levelDescriptionsTable[_level].musicKeys[11]];
 				break;
 			}
-		} else if (_objectsPtrTable[kObjPtrMusic]->specialData[1][21] == 1048576) { // SUPER_MORPH
+		}
+		else if (_objectsPtrTable[kObjPtrMusic]->specialData[1][21] == 1048576) { // SUPER_MORPH
 			_snd._musicKey = _res._musicKeysTable[_res._levelDescriptionsTable[_level].musicKeys[12]];
-		} else {
+		}
+		else {
 			switch (_objectsPtrTable[kObjPtrMusic]->specialData[1][22]) {
 			case 0:
 				break;
@@ -1309,7 +1342,8 @@ void Game::playMusic(int mode) {
 				if (_level != 8 && _level != 9) {
 					if (_ticks & 1) {
 						_snd._musicKey = _res._musicKeysTable[_res._levelDescriptionsTable[_level].musicKeys[7]];
-					} else {
+					}
+					else {
 						_snd._musicKey = _res._musicKeysTable[_res._levelDescriptionsTable[_level].musicKeys[8]];
 					}
 				}
@@ -1333,18 +1367,23 @@ void Game::playMusic(int mode) {
 					if (_objectsPtrTable[kObjPtrMusic]->specialData[1][22] == 2097152) {
 						_snd._musicKey = _res._musicKeysTable[_res._levelDescriptionsTable[_level].musicKeys[6]];
 					}
-				} else if (_level != 9) {
+				}
+				else if (_level != 9) {
 					if (_ticks & 2) {
 						_snd._musicKey = _res._musicKeysTable[_res._levelDescriptionsTable[_level].musicKeys[4]];
-					} else {
+					}
+					else {
 						_snd._musicKey = _res._musicKeysTable[_res._levelDescriptionsTable[_level].musicKeys[5]];
 					}
-				} else {
+				}
+				else {
 					if (_ticks & 2) {
 						_snd._musicKey = _res._musicKeysTable[_res._levelDescriptionsTable[_level].musicKeys[4]];
-					} else if ((_ticks & 3) == 3) {
+					}
+					else if ((_ticks & 3) == 3) {
 						_snd._musicKey = _res._musicKeysTable[_res._levelDescriptionsTable[_level].musicKeys[5]];
-					} else {
+					}
+					else {
 						_snd._musicKey = _res._musicKeysTable[_res._levelDescriptionsTable[_level].musicKeys[6]];
 					}
 				}
@@ -1362,7 +1401,7 @@ void Game::playMusic(int mode) {
 				if (_level != 8 && _level != 9) {
 					_snd._musicKey = _res._musicKeysTable[_res._levelDescriptionsTable[_level].musicKeys[5]];
 				}
-				break; 
+				break;
 			case 65536:
 				break;
 			default:
@@ -1379,7 +1418,7 @@ void Game::playMusic(int mode) {
 		}
 		if (_snd._musicKey > 0) {
 			_snd.playMidi(_objectsPtrTable[kObjPtrWorld]->objKey, _snd._musicKey);
-			const uint8_t *p_sndtype = _res.getData(kResType_SND, _snd._musicKey, "SNDTYPE");
+			const uint8_t* p_sndtype = _res.getData(kResType_SND, _snd._musicKey, "SNDTYPE");
 			if (p_sndtype) {
 				_snd._musicMode = mode;
 			}
@@ -1387,10 +1426,10 @@ void Game::playMusic(int mode) {
 	}
 }
 
-void Game::clearObjectMessage(GameObject *o) {
-	GameMessage *m_cur = o->msg;
+void Game::clearObjectMessage(GameObject* o) {
+	GameMessage* m_cur = o->msg;
 	while (m_cur) {
-		GameMessage *m_next = m_cur->next;
+		GameMessage* m_next = m_cur->next;
 		free(m_cur);
 		m_cur = m_next;
 	}
@@ -1401,7 +1440,7 @@ int Game::isScriptAnimFrameEnd() {
 	return _currentObject->anim.anikeyfData == 0;
 }
 
-void Game::setObjectData(GameObject *o, int param, int32_t value) {
+void Game::setObjectData(GameObject* o, int param, int32_t value) {
 	if (param >= 256) {
 		switch (param) {
 		case 257:
@@ -1467,15 +1506,19 @@ void Game::setObjectData(GameObject *o, int param, int32_t value) {
 			error("Game::setObjectData() unhandled param %d", param);
 			break;
 		}
-	} else if (param >= 128) {
+	}
+	else if (param >= 128) {
 		error("Game::setObjectData() invalid access to _varsTable");
-	} else if (param >= 96) {
+	}
+	else if (param >= 96) {
 		setObjectFlag(o, param, value);
-	} else if (param >= 64) {
+	}
+	else if (param >= 64) {
 		param -= 64;
 		assert(param < 12);
 		o->customData[param] = value;
-	} else {
+	}
+	else {
 		assert(param <= 26);
 		if (param == 8) {
 			if (!o->updateColliding && !o->setColliding) {
@@ -1486,7 +1529,7 @@ void Game::setObjectData(GameObject *o, int param, int32_t value) {
 	}
 }
 
-int32_t Game::getObjectData(GameObject *o, int param) {
+int32_t Game::getObjectData(GameObject* o, int param) {
 	int32_t value = 0;
 	if (param >= 256) {
 		switch (param) {
@@ -1526,17 +1569,20 @@ int32_t Game::getObjectData(GameObject *o, int param) {
 			error("Game::getObjectData() unhandled param %d", param);
 			break;
 		}
-	} else if (param >= 128) {
+	}
+	else if (param >= 128) {
 		error("Game::getObjectData() invalid access to _varsTable");
-	} else if (param >= 96) {
+	}
+	else if (param >= 96) {
 		value = getObjectFlag(o, param);
-	} else {
+	}
+	else {
 		value = o->getData(param);
 	}
 	return value;
 }
 
-int32_t Game::getObjectScriptParam(GameObject *o, int param) {
+int32_t Game::getObjectScriptParam(GameObject* o, int param) {
 	int32_t value = 0;
 	if (param >= 256) {
 		switch (param) {
@@ -1576,12 +1622,15 @@ int32_t Game::getObjectScriptParam(GameObject *o, int param) {
 			error("Game::getObjectScriptParam() unhandled param %d", param);
 			break;
 		}
-	} else if (param >= 128) {
+	}
+	else if (param >= 128) {
 		param -= 128;
 		value = _varsTable[param];
-	} else if (param >= 96) {
+	}
+	else if (param >= 96) {
 		value = getObjectFlag(o, param);
-	} else {
+	}
+	else {
 		value = o->getData(param);
 		if (param == 20) {
 			value &= 15;
@@ -1709,7 +1758,7 @@ static const Game::OpcodeProc _opcodeTable[kOpcodesCount] = {
 	&Game::op_stopSound
 };
 
-int Game::executeObjectScriptOpcode(GameObject *o, uint32_t op, const uint8_t *&data) {
+int Game::executeObjectScriptOpcode(GameObject* o, uint32_t op, const uint8_t*& data) {
 	int32_t val, argv[8];
 
 	debug(kDebug_GAME, "Game::executeObjectScriptOpcode() o %p op 0x%x", o, op);
@@ -1717,7 +1766,8 @@ int Game::executeObjectScriptOpcode(GameObject *o, uint32_t op, const uint8_t *&
 	if (_res._psxCmdData) {
 		mask = op >> 8;
 		op &= 0xFF;
-	} else {
+	}
+	else {
 		mask = READ_LE_UINT32(data); data += 4;
 	}
 	assert(op < kOpcodesCount);
@@ -1743,7 +1793,8 @@ int Game::executeObjectScriptOpcode(GameObject *o, uint32_t op, const uint8_t *&
 				val = 0;
 				break;
 			}
-		} else {
+		}
+		else {
 			val = READ_LE_UINT32(data); data += 4;
 		}
 		if (mask & (1 << i)) {
@@ -1757,8 +1808,8 @@ int Game::executeObjectScriptOpcode(GameObject *o, uint32_t op, const uint8_t *&
 	return (this->*_opcodeTable[op])(argc, argv);
 }
 
-uint8_t *Game::getStartScriptAnim() {
-	uint8_t *p = 0;
+uint8_t* Game::getStartScriptAnim() {
+	uint8_t* p = 0;
 	if (_currentObject->scriptStateKey > 0) {
 		_currentScriptKey = _res.getChild(kResType_STM, _currentObject->scriptStateKey);
 		if (_currentScriptKey != 0) {
@@ -1770,8 +1821,8 @@ uint8_t *Game::getStartScriptAnim() {
 	return p;
 }
 
-uint8_t *Game::getNextScriptAnim() {
-	uint8_t *p = 0;
+uint8_t* Game::getNextScriptAnim() {
+	uint8_t* p = 0;
 	if (_currentScriptKey > 0) {
 		_currentScriptKey = _res.getNext(kResType_STM, _currentScriptKey);
 		if (_currentScriptKey != 0) {
@@ -1783,7 +1834,7 @@ uint8_t *Game::getNextScriptAnim() {
 	return p;
 }
 
-int Game::executeObjectScript(GameObject *o) {
+int Game::executeObjectScript(GameObject* o) {
 	int runScript = 0;
 	int currentInput = getCurrentInput();
 	uint8_t inputKey0 = _inputsTable[currentInput].inputKey0;
@@ -1797,12 +1848,12 @@ int Game::executeObjectScript(GameObject *o) {
 				warning("Game::executeObjectScript() '%s' msg index %d out of bounds (count %d)", o->name, num, _res._msgOffsetsTableCount);
 				return -1;
 			}
-			const uint8_t *msgList = _res.getMsgData(num);
+			const uint8_t* msgList = _res.getMsgData(num);
 			for (int i = 0; i < messagesCount && runScript == 0; ++i) {
 				if (msgList[i] == 0) {
 					break;
 				}
-				for (GameMessage *objectMsg = o->msg; objectMsg && runScript == 0; objectMsg = objectMsg->next) {
+				for (GameMessage* objectMsg = o->msg; objectMsg && runScript == 0; objectMsg = objectMsg->next) {
 					if (objectMsg->num == msgList[i]) {
 						scriptMsgNum = objectMsg->num;
 						runScript = 1;
@@ -1831,12 +1882,15 @@ int Game::executeObjectScript(GameObject *o) {
 				if (_inputDirKeyPressed[inputKey0] != 0) {
 					if (_inputDirKeyPressed[inputKey0] & 2) {
 						objectRy = -rotationStep;
-					} else if (_inputDirKeyPressed[inputKey0] & 1) {
+					}
+					else if (_inputDirKeyPressed[inputKey0] & 1) {
 						objectRy = rotationStep;
-					} else {
+					}
+					else {
 						_varsTable[26] = 0;
 					}
-				} else {
+				}
+				else {
 					_varsTable[26] = 0;
 				}
 				if (objectRy != 0) {
@@ -1846,7 +1900,8 @@ int Game::executeObjectScript(GameObject *o) {
 						_varsTable[26] += 3;
 					}
 				}
-			} else {
+			}
+			else {
 				_varsTable[26] = 0;
 			}
 		}
@@ -1855,8 +1910,10 @@ int Game::executeObjectScript(GameObject *o) {
 		if (gotoNextScriptAnim() == 1) {
 			return 0;
 		}
-	} else if (o->specialData[1][23] == scriptMsgNum) {
-	} else {
+	}
+	else if (o->specialData[1][23] == scriptMsgNum) {
+	}
+	else {
 		const int fl = (scriptMsgNum == 57) ? 1 : 0;
 		gotoEndScriptAnim(fl);
 	}
@@ -1875,13 +1932,14 @@ int Game::executeObjectScript(GameObject *o) {
 					}
 				}
 			}
-			const uint8_t *scriptData = _res.getCmdData(scriptCmdNum);
+			const uint8_t* scriptData = _res.getCmdData(scriptCmdNum);
 			int scriptRet = 1;
 			while (scriptRet) {
 				int32_t op;
 				if (_res._psxCmdData) {
 					op = (int16_t)READ_LE_UINT16(scriptData); scriptData += 2;
-				} else {
+				}
+				else {
 					op = READ_LE_UINT32(scriptData); scriptData += 4;
 				}
 				if (op == -1) {
@@ -1904,7 +1962,8 @@ int Game::executeObjectScript(GameObject *o) {
 					int32_t op;
 					if (_res._psxCmdData) {
 						op = (int16_t)READ_LE_UINT16(scriptData); scriptData += 2;
-					} else {
+					}
+					else {
 						op = READ_LE_UINT32(scriptData); scriptData += 4;
 					}
 					if (op == -2) {
@@ -1928,15 +1987,17 @@ int Game::executeObjectScript(GameObject *o) {
 			if (isScriptAnimFrameEnd()) {
 				return 0;
 			}
-		} else {
+		}
+		else {
 			if (runScript && scriptMsgNum != -1 && o->specialData[1][23] == scriptMsgNum && o->anim.anikeyfData) {
 				if (gotoNextScriptAnim() == 1 || isScriptAnimFrameEnd()) {
 					return 0;
 				}
-			} else {
+			}
+			else {
 				int16_t scriptKey = o->scriptStateKey;
 				o->scriptStateKey = READ_LE_UINT16(o->scriptCondData + 4);
-				const uint8_t *scriptData = o->scriptStateData;
+				const uint8_t* scriptData = o->scriptStateData;
 				o->scriptStateData = _res.getData(kResType_STM, o->scriptStateKey, "STMSTATE");
 				if (gotoStartScriptAnim() == 1 || isScriptAnimFrameEnd()) {
 					o->scriptStateKey = scriptKey;
@@ -1952,77 +2013,77 @@ int Game::executeObjectScript(GameObject *o) {
 	return 1;
 }
 
-void Game::runObject(GameObject *o) {
+void Game::runObject(GameObject* o) {
 	int x, y, z, ry;
-	
-		do {
-			debug(kDebug_GAME, "Game::runObject name '%s' state %d pos %d,%d,%d flags 0x%x", o->name, o->state, o->xPos, o->yPos, o->zPos, o->flags[1]);
-			if (o->state == 1 && (o->flags[1] & 0x4000) == 0) {
-				o->xPosParentPrev = o->xPosParent;
-				o->yPosParentPrev = o->yPosParent;
-				o->zPosParentPrev = o->zPosParent;
-				GameObject* o_parent = o->o_parent;
-				o->xPosParent = o_parent->xPosParent + o_parent->xPos;
-				o->yPosParent = o_parent->yPosParent + o_parent->yPos;
-				o->zPosParent = o_parent->zPosParent + o_parent->zPos;
-				if (o->setColliding) {
-					x = o->xPosPrev;
-					y = o->yPosPrev;
-					z = o->zPosPrev;
-					ry = o->pitchPrev;
-				}
-				else {
-					x = o->xPos;
-					y = o->yPos;
-					z = o->zPos;
-					ry = o->pitch;
-				}
-				int scriptExecCount = 0;
-				for (; scriptExecCount < 10 && !_endGame; ++scriptExecCount) {
-					if (executeObjectScript(o) != 0) {
-						break;
-					}
-				}
-				if (scriptExecCount == 10) {
-					warning("Game::executeObjectScript() possible infinite script loop for object '%s'", o->name);
-					o->state = 0;
-				}
-				o->xPosPrev = x;
-				o->yPosPrev = y;
-				o->zPosPrev = z;
-				o->pitchPrev = ry;
-				if (o->xPos != o->xPosPrev || o->zPos != o->zPosPrev || o->o_parent->updateColliding || o->parentChanged) {
-					resetCollisionSlot(o);
-					setCollisionSlotsUsingCallback1(o->xPosParent + o->xPos, o->zPosParent + o->zPos, &Game::collisionSlotCb2);
-					o->updateColliding = true;
-					o->parentChanged = false;
-					o->room = getCellMapShr19(o->xPosParent + o->xPos, o->zPosParent + o->zPos)->room;
-				}
-				o->inSceneList = 0;
-				GameObject* o_child = o->o_child;
-				if (o_child && (o_child->flags[1] & 0x100) == 0) {
-					runObject(o_child);
+
+	do {
+		debug(kDebug_GAME, "Game::runObject name '%s' state %d pos %d,%d,%d flags 0x%x", o->name, o->state, o->xPos, o->yPos, o->zPos, o->flags[1]);
+		if (o->state == 1 && (o->flags[1] & 0x4000) == 0) {
+			o->xPosParentPrev = o->xPosParent;
+			o->yPosParentPrev = o->yPosParent;
+			o->zPosParentPrev = o->zPosParent;
+			GameObject* o_parent = o->o_parent;
+			o->xPosParent = o_parent->xPosParent + o_parent->xPos;
+			o->yPosParent = o_parent->yPosParent + o_parent->yPos;
+			o->zPosParent = o_parent->zPosParent + o_parent->zPos;
+			if (o->setColliding) {
+				x = o->xPosPrev;
+				y = o->yPosPrev;
+				z = o->zPosPrev;
+				ry = o->pitchPrev;
+			}
+			else {
+				x = o->xPos;
+				y = o->yPos;
+				z = o->zPos;
+				ry = o->pitch;
+			}
+			int scriptExecCount = 0;
+			for (; scriptExecCount < 10 && !_endGame; ++scriptExecCount) {
+				if (executeObjectScript(o) != 0) {
+					break;
 				}
 			}
-			else if (o->o_parent->updateColliding) {
-				if (!o->setColliding) {
-					o->setColliding = true;
-					addToCollidingObjects(o);
-				}
+			if (scriptExecCount == 10) {
+				warning("Game::executeObjectScript() possible infinite script loop for object '%s'", o->name);
+				o->state = 0;
 			}
-			o->updateColliding = false;
-			assert(o != o->o_next);
-			
-		} while ((o = o->o_next) != 0 && (o->flags[1] & 0x100) == 0) ;
-	
+			o->xPosPrev = x;
+			o->yPosPrev = y;
+			o->zPosPrev = z;
+			o->pitchPrev = ry;
+			if (o->xPos != o->xPosPrev || o->zPos != o->zPosPrev || o->o_parent->updateColliding || o->parentChanged) {
+				resetCollisionSlot(o);
+				setCollisionSlotsUsingCallback1(o->xPosParent + o->xPos, o->zPosParent + o->zPos, &Game::collisionSlotCb2);
+				o->updateColliding = true;
+				o->parentChanged = false;
+				o->room = getCellMapShr19(o->xPosParent + o->xPos, o->zPosParent + o->zPos)->room;
+			}
+			o->inSceneList = 0;
+			GameObject* o_child = o->o_child;
+			if (o_child && (o_child->flags[1] & 0x100) == 0) {
+				runObject(o_child);
+			}
+		}
+		else if (o->o_parent->updateColliding) {
+			if (!o->setColliding) {
+				o->setColliding = true;
+				addToCollidingObjects(o);
+			}
+		}
+		o->updateColliding = false;
+		assert(o != o->o_next);
+
+	} while ((o = o->o_next) != 0 && (o->flags[1] & 0x100) == 0);
+
 }
 
 void Game::setPlayerRoomObjectsData(int fl) {
-	GameObject *o_player = getObjectByKey(_varsTable[kVarPlayerObject]);
+	GameObject* o_player = getObjectByKey(_varsTable[kVarPlayerObject]);
 	int xPos = o_player->xPos + o_player->xPosParent;
 	int zPos = o_player->zPos + o_player->zPosParent;
-	CellMap *cell = getCellMapShr19(xPos, zPos);
-	GameObject *o = _roomsTable[cell->room].o;
+	CellMap* cell = getCellMapShr19(xPos, zPos);
+	GameObject* o = _roomsTable[cell->room].o;
 	assert(o);
 	while (o != _objectsPtrTable[kObjPtrWorld]) {
 		setObjectData(o, 267, fl);
@@ -2040,7 +2101,7 @@ void Game::setPlayerRoomObjectsData(int fl) {
 }
 
 void Game::setPlayerObject(int16_t objKey) {
-	GameObject *o = (objKey == 0) ? _currentObject : getObjectByKey(objKey);
+	GameObject* o = (objKey == 0) ? _currentObject : getObjectByKey(objKey);
 	assert(o);
 	assert((o->flags[1] & 0x80) == 0 && (o->flags[1] & 4) == 0 && (o->flags[1] & 0x10000) != 0);
 	assert(o->state == 1);
@@ -2050,7 +2111,7 @@ void Game::setPlayerObject(int16_t objKey) {
 	setPlayerRoomObjectsData(1);
 	setCameraObject(o, &_cameraViewObj);
 	for (int i = 0; i < _inputsCount; ++i) {
-		GameInput *inp = &_inputsTable[i];
+		GameInput* inp = &_inputsTable[i];
 		inp->keymaskPrev = inp->keymask = 0;
 		inp->sysmaskPrev = inp->sysmask = 0;
 		_inputDirKeyReleased[inp->inputKey0] = _inputDirKeyReleased[inp->inputKey1] = 0;
@@ -2060,7 +2121,7 @@ void Game::setPlayerObject(int16_t objKey) {
 }
 
 void Game::updatePlayerObject() {
-	GameObject *o;
+	GameObject* o;
 
 	if (_newPlayerObject != 0) {
 		o = getObjectByKey(_newPlayerObject);
@@ -2068,7 +2129,8 @@ void Game::updatePlayerObject() {
 		assert((o->flags[1] & 0x80) == 0 && (o->flags[1] & 4) == 0 && (o->flags[1] & 0x10000) != 0);
 		setPlayerObject(_newPlayerObject);
 		_newPlayerObject = 0;
-	} else {
+	}
+	else {
 		int16_t objKey = _varsTable[kVarPlayerObject];
 		if (_objectsPtrTable[kObjPtrConrad]->objKey != objKey) {
 			o = getObjectByKey(objKey);
@@ -2079,14 +2141,15 @@ void Game::updatePlayerObject() {
 				if (o != _objectsPtrTable[kObjPtrWorld]) {
 					setPlayerObject(_objectsPtrTable[kObjPtrConrad]->objKey);
 				}
-			} else {
+			}
+			else {
 				setPlayerObject(_objectsPtrTable[kObjPtrConrad]->objKey);
 			}
 		}
 	}
 }
 
-void Game::addToChangedObjects(GameObject *o) {
+void Game::addToChangedObjects(GameObject* o) {
 	assert(_changedObjectsCount < kChangedObjectsTableSize);
 	for (int i = 0; i < _changedObjectsCount; ++i) {
 		if (_changedObjectsTable[_changedObjectsCount] == o) {
@@ -2099,7 +2162,7 @@ void Game::addToChangedObjects(GameObject *o) {
 
 void Game::updateChangedObjects() {
 	for (int i = 0; i < _changedObjectsCount; ++i) {
-		GameObject *o = _changedObjectsTable[i];
+		GameObject* o = _changedObjectsTable[i];
 		assert(o);
 		switch (o->state) {
 		case 2:
@@ -2149,10 +2212,11 @@ void Game::updateChangedObjects() {
 		}
 	}
 	if (_snd._musicMode != 1) {
-		GameObject *o_tmp, *o_music = _objectsPtrTable[kObjPtrMusic];
+		GameObject* o_tmp, * o_music = _objectsPtrTable[kObjPtrMusic];
 		if ((o_music->flags[1] & 0x80) != 0 && o_music->specialData[1][22] == 0x40000) {
 			o_tmp = o_music;
-		} else {
+		}
+		else {
 			o_music->room = getCellMapShr19(o_music->xPos + o_music->xPosParent, o_music->zPos + o_music->zPosParent)->room;
 			o_tmp = _roomsTable[o_music->room].o;
 		}
@@ -2166,7 +2230,7 @@ void Game::updateChangedObjects() {
 		}
 	}
 	if (_cameraViewKey != _objectsPtrTable[kObjPtrConrad]->objKey) {
-		GameObject *o = getObjectByKey(_cameraViewKey);
+		GameObject* o = getObjectByKey(_cameraViewKey);
 		if (o) {
 			while (o->state == 1 && o != _objectsPtrTable[kObjPtrWorld]) {
 				o = o->o_parent;
@@ -2183,19 +2247,22 @@ void Game::updateCameraViewpoint(int xPos, int yPos, int zPos) {
 	static const int e = 1 << (kPosShift - 1);
 	if (xPos < _xPosViewpoint - e || xPos > _xPosViewpoint + e) {
 		_cameraDx = (((-_xPosViewpoint + xPos) / 5) + _cameraDx) / 2;
-	} else {
+	}
+	else {
 		_cameraDx = 0;
 	}
 	_xPosViewpoint += _cameraDx;
 	if (yPos < _yPosViewpoint - e || yPos > _yPosViewpoint + e) {
 		_cameraDy = (((-_yPosViewpoint + yPos) / 5) + _cameraDy) / 2;
-	} else {
+	}
+	else {
 		_cameraDy = 0;
 	}
 	_yPosViewpoint += _cameraDy;
 	if (zPos < _zPosViewpoint - e || zPos > _zPosViewpoint + e) {
 		_cameraDz = (((-_zPosViewpoint + zPos) / 5) + _cameraDz) / 2;
-	} else {
+	}
+	else {
 		_cameraDz = 0;
 	}
 	_zPosViewpoint += _cameraDz;
@@ -2203,7 +2270,7 @@ void Game::updateCameraViewpoint(int xPos, int yPos, int zPos) {
 
 bool Game::updateGlobalPos(int dx, int dy, int dz, int dx0, int dz0, int flag) {
 	bool ret = true;
-	GameObject *o = _currentObject;
+	GameObject* o = _currentObject;
 	int pitchTable[3] = { 0, 0, 0 };
 	int angle = 2;
 	bool collidingTest = false;
@@ -2228,7 +2295,8 @@ bool Game::updateGlobalPos(int dx, int dy, int dz, int dx0, int dz0, int flag) {
 		if (flag == 0) {
 			rx0 >>= 1;
 			rz0 >>= 1;
-		} else {
+		}
+		else {
 			rx0 >>= 5;
 			rz0 >>= 5;
 		}
@@ -2258,7 +2326,7 @@ bool Game::updateGlobalPos(int dx, int dy, int dz, int dx0, int dz0, int flag) {
 		o->zPosWorld = z;
 		x = o->xPosParent + o->xPos;
 		z = o->zPosParent + o->zPos;
-		CellMap *cell = getCellMapShr19(x, z);
+		CellMap* cell = getCellMapShr19(x, z);
 		o->room = cell->room;
 		if (o->room == 0) {
 			o->room = cell->room2;
@@ -2269,16 +2337,19 @@ bool Game::updateGlobalPos(int dx, int dy, int dz, int dx0, int dz0, int flag) {
 		}
 		assert(o->room != 0);
 		if (o != _objectsPtrTable[kObjPtrConrad] && (o->flags[1] & 0x1000) != 0) {
-			GameRoom *room = &_roomsTable[o->room];
+			GameRoom* room = &_roomsTable[o->room];
 			if (room->o->state != 1 && room->o->state != 3) {
 				setObjectParent(o, room->o);
-			} else if (testObjectsRoom(o->objKey, _objectsPtrTable[kObjPtrConrad]->objKey)) {
+			}
+			else if (testObjectsRoom(o->objKey, _objectsPtrTable[kObjPtrConrad]->objKey)) {
 				setObjectParent(o, _roomsTable[_varsTable[22]].o);
-			} else {
+			}
+			else {
 				setObjectParent(o, room->o);
 			}
 		}
-	} else if (o->specialData[1][23] == 57) {
+	}
+	else if (o->specialData[1][23] == 57) {
 		o->xPos = x;
 		o->yPos = y - (((int16_t)READ_LE_UINT16(o->anim.anikeyfData + 4)) << 11);
 		o->zPos = z;
@@ -2289,26 +2360,30 @@ bool Game::updateGlobalPos(int dx, int dy, int dz, int dx0, int dz0, int flag) {
 		}
 		if (_updateGlobalPosRefObject) {
 			if (_updateGlobalPosRefObject->specialData[1][21] != 8) {
-				GameObject *o_tmp = _currentObject;
+				GameObject* o_tmp = _currentObject;
 				_currentObject = _updateGlobalPosRefObject;
 				sendMessage(57, o->objKey);
 				_currentObject = o_tmp;
 			}
-		} else {
+		}
+		else {
 			sendMessage(57, o->objKey);
 			ret = false;
 		}
 		if (o != _objectsPtrTable[kObjPtrConrad] && (o->flags[1] & 0x1000) != 0) {
-			GameObject *o_room = _roomsTable[o->room].o;
+			GameObject* o_room = _roomsTable[o->room].o;
 			if (o_room->state != 1 && o_room->state != 3) {
 				setObjectParent(o, o_room);
-			} else if (testObjectsRoom(o->objKey, _objectsPtrTable[kObjPtrConrad]->objKey)) {
+			}
+			else if (testObjectsRoom(o->objKey, _objectsPtrTable[kObjPtrConrad]->objKey)) {
 				setObjectParent(o, _roomsTable[_varsTable[22]].o);
-			} else {
+			}
+			else {
 				setObjectParent(o, o_room);
 			}
 		}
-	} else {
+	}
+	else {
 		o->xPos += rx0;
 		o->yPos -= dy << 11;
 		o->zPos -= rz0;
@@ -2321,7 +2396,8 @@ bool Game::updateGlobalPos(int dx, int dy, int dz, int dx0, int dz0, int flag) {
 			_currentObject = _updateGlobalPosRefObject;
 			sendMessage(57, o->objKey);
 			_currentObject = o;
-		} else {
+		}
+		else {
 			sendMessage(57, o->objKey);
 		}
 		ret = false;
@@ -2330,7 +2406,7 @@ bool Game::updateGlobalPos(int dx, int dy, int dz, int dx0, int dz0, int flag) {
 		if (roomPrev != o->room) {
 			_roomsTable[o->room].fl = 1;
 			if (_snd._musicMode == 3) {
-				GameObject *o_tmp = _objectsPtrTable[kObjPtrMusic];
+				GameObject* o_tmp = _objectsPtrTable[kObjPtrMusic];
 				if ((o_tmp->flags[1] & 0x80) == 0) {
 					o_tmp->room = getCellMapShr19(o_tmp->xPos, o_tmp->zPos)->room;
 					o_tmp = _roomsTable[o_tmp->room].o;
@@ -2343,7 +2419,8 @@ bool Game::updateGlobalPos(int dx, int dy, int dz, int dx0, int dz0, int flag) {
 				if (o_tmp != _objectsPtrTable[kObjPtrWorld]) {
 					playMusic(-1);
 				}
-			} else {
+			}
+			else {
 				playMusic(-1);
 			}
 			_room = o->room;
@@ -2357,7 +2434,8 @@ bool Game::updateGlobalPos(int dx, int dy, int dz, int dx0, int dz0, int flag) {
 				_x0PosViewpoint = _xPosViewpoint;
 				_y0PosViewpoint = _yPosViewpoint;
 				_z0PosViewpoint = _zPosViewpoint;
-			} else {
+			}
+			else {
 				dx0 = dy0 = dz0 = 0;
 			}
 			if (flag == 0) {
@@ -2383,12 +2461,14 @@ bool Game::updateGlobalPos(int dx, int dy, int dz, int dx0, int dz0, int flag) {
 				if (_cameraState == 0) {
 					if (_cameraStep1 != 0) {
 						updateCameraViewpoint(x, y, z);
-					} else {
+					}
+					else {
 						_xPosViewpoint = o->xPosParent + o->xPos;
 						_yPosViewpoint = o->yPosParent + o->yPos;
 						_zPosViewpoint = o->zPosParent + o->zPos;
 					}
-				} else {
+				}
+				else {
 					_xPosViewpoint = x;
 					_yPosViewpoint = y;
 					_zPosViewpoint = z;
@@ -2406,7 +2486,8 @@ bool Game::updateGlobalPos(int dx, int dy, int dz, int dx0, int dz0, int flag) {
 						_fixedViewpoint = false;
 					}
 				}
-			} else {
+			}
+			else {
 				if (_cameraStep1 != 0) {
 					rx0 = ((cosy * _animDx) - (siny * _animDz)) >> 5;
 					rz0 = ((siny * _animDx) + (cosy * _animDz)) >> 5;
@@ -2416,17 +2497,20 @@ bool Game::updateGlobalPos(int dx, int dy, int dz, int dx0, int dz0, int flag) {
 							y = o->yPosParent + o->yPos;
 							z = o->zPosParent + o->zPos + rz0;
 							updateCameraViewpoint(x, y, z);
-						} else {
+						}
+						else {
 							_xPosViewpoint -= rx0;
 							_zPosViewpoint += rz0;
 						}
-					} else {
+					}
+					else {
 						_xPosViewpoint = o->xPosParent + o->xPos - rx0;
 						_yPosViewpoint = o->yPosParent + o->yPos;
 						_zPosViewpoint = o->zPosParent + o->zPos + rz0;
 						_fixedViewpoint = false;
 					}
-				} else {
+				}
+				else {
 					_xPosViewpoint = o->xPosParent + o->xPos;
 					_yPosViewpoint = o->yPosParent + o->yPos;
 					_zPosViewpoint = o->zPosParent + o->zPos;
@@ -2442,23 +2526,25 @@ bool Game::updateGlobalPos(int dx, int dy, int dz, int dx0, int dz0, int flag) {
 	return ret;
 }
 
-GameObject *Game::getNextObject(GameObject *o) {
+GameObject* Game::getNextObject(GameObject* o) {
 	assert(o);
 	if (o->o_next) {
 		return o->o_next;
-	} else {
+	}
+	else {
 		return o->o_parent->o_child;
 	}
 }
 
-GameObject *Game::getPreviousObject(GameObject *o) {
+GameObject* Game::getPreviousObject(GameObject* o) {
 	assert(o);
-	GameObject *o_tmp = o->o_parent->o_child;
+	GameObject* o_tmp = o->o_parent->o_child;
 	if (o_tmp != o) {
 		while (o_tmp->o_next != o) {
 			o_tmp = o_tmp->o_next;
 		}
-	} else {
+	}
+	else {
 		while (o_tmp->o_next != 0) {
 			o_tmp = o_tmp->o_next;
 		}
@@ -2466,7 +2552,7 @@ GameObject *Game::getPreviousObject(GameObject *o) {
 	return o_tmp;
 }
 
-void Game::setObjectParent(GameObject *o, GameObject *o_parent) {
+void Game::setObjectParent(GameObject* o, GameObject* o_parent) {
 	if (o_parent == _objectsPtrTable[kObjPtrCimetiere]) {
 		o->specialData[1][8] = 0;
 	}
@@ -2477,13 +2563,14 @@ void Game::setObjectParent(GameObject *o, GameObject *o_parent) {
 		if (!_objectsPtrTable[kObjPtrUtil] && o_parent == _objectsPtrTable[kObjPtrInventaire]->o_child->o_next) {
 			_objectsPtrTable[kObjPtrUtil] = o;
 			if (getMessage(o->objKey, 0, &_tmpMsg)) {
-				o->text = (const char *)_tmpMsg.data;
+				o->text = (const char*)_tmpMsg.data;
 			}
 		}
 		if (o == o->o_parent->o_child) {
 			o->o_parent->o_child = o->o_next;
-		} else {
-			GameObject *o_tmp = getPreviousObject(o);
+		}
+		else {
+			GameObject* o_tmp = getPreviousObject(o);
 			o_tmp->o_next = o->o_next;
 		}
 		o->xPosParent = o_parent->xPosParent + o_parent->xPos;
@@ -2492,36 +2579,41 @@ void Game::setObjectParent(GameObject *o, GameObject *o_parent) {
 		o->o_parent = o_parent;
 		o->o_next = 0;
 		o->parentChanged = true;
-		GameObject *o_tmp = o_parent->o_child;
+		GameObject* o_tmp = o_parent->o_child;
 		if (!o_tmp) {
 			o_parent->o_child = o;
-		} else {
+		}
+		else {
 			while (o_tmp->o_next) {
 				o_tmp = o_tmp->o_next;
 			}
 			o_tmp->o_next = o;
 		}
-	} else {
+	}
+	else {
 		if (_objectsPtrTable[kObjPtrUtil] && o == _objectsPtrTable[kObjPtrUtil]) {
 			if (o == o->o_parent->o_child && !o->o_next) {
 				_objectsPtrTable[kObjPtrUtil] = 0;
 				_varsTable[23] = 0;
-			} else {
+			}
+			else {
 				if (o->o_next) {
 					_objectsPtrTable[kObjPtrUtil] = o->o_next;
-				} else {
+				}
+				else {
 					_objectsPtrTable[kObjPtrUtil] = o->o_parent->o_child;
 				}
 				_varsTable[23] = _objectsPtrTable[kObjPtrUtil]->objKey;
 				if (getMessage(_objectsPtrTable[kObjPtrUtil]->objKey, 0, &_tmpMsg)) {
-					_objectsPtrTable[kObjPtrUtil]->text = (const char *)_tmpMsg.data;
+					_objectsPtrTable[kObjPtrUtil]->text = (const char*)_tmpMsg.data;
 				}
 			}
 		}
 		if (o == o->o_parent->o_child) {
 			o->o_parent->o_child = o->o_next;
-		} else {
-			GameObject *o_tmp = getPreviousObject(o);
+		}
+		else {
+			GameObject* o_tmp = getPreviousObject(o);
 			o_tmp->o_next = o->o_next;
 		}
 		o->xPosParent = o_parent->xPosParent + o_parent->xPos;
@@ -2530,13 +2622,15 @@ void Game::setObjectParent(GameObject *o, GameObject *o_parent) {
 		o->o_parent = o_parent;
 		o->o_next = 0;
 		o->parentChanged = true;
-		GameObject *o_tmp = o_parent->o_child;
+		GameObject* o_tmp = o_parent->o_child;
 		if (!o_tmp) {
 			o_parent->o_child = o;
-		} else if (o_tmp->flags[1] & 0x100) {
+		}
+		else if (o_tmp->flags[1] & 0x100) {
 			o->o_next = o_tmp;
 			o_parent->o_child = o;
-		} else {
+		}
+		else {
 			while (o_tmp->o_next && (o_tmp->o_next->flags[1] & 0x100) == 0) {
 				o_tmp = o_tmp->o_next;
 			}
@@ -2548,7 +2642,7 @@ void Game::setObjectParent(GameObject *o, GameObject *o_parent) {
 }
 
 void Game::fixRoomDataHelper(int x, int z, uint8_t room) {
-	CellMap *cell = getCellMap(x, z);
+	CellMap* cell = getCellMap(x, z);
 	if (!cell->fixed) {
 		cell->fixed = true;
 		if (cell->type != 0) {
@@ -2560,11 +2654,11 @@ void Game::fixRoomDataHelper(int x, int z, uint8_t room) {
 		}
 	}
 	static const int dxCell[] = { -1,  0,  1, -1,  1, -1,  0,  1 };
-	static const int dzCell[] = {  1,  1,  1,  0,  0, -1, -1, -1 };
+	static const int dzCell[] = { 1,  1,  1,  0,  0, -1, -1, -1 };
 	for (int i = 0; i < 8; ++i) {
 		int cx = x + dxCell[i];
 		int cz = z + dzCell[i];
-		assert(cx >= 0 && cx < kMapSizeX && cz >= 0 && cz < kMapSizeZ);
+		assert(cx >= 0 && cx < kMapSizeX&& cz >= 0 && cz < kMapSizeZ);
 		if (!_sceneCellMap[cx][cz].fixed) {
 			fixRoomDataHelper(cx, cz, room);
 		}
@@ -2574,7 +2668,7 @@ void Game::fixRoomDataHelper(int x, int z, uint8_t room) {
 void Game::fixRoomData() {
 	for (int x = 0; x < kMapSizeX; ++x) {
 		for (int z = 0; z < kMapSizeZ; ++z) {
-			CellMap *cell = &_sceneCellMap[x][z];
+			CellMap* cell = &_sceneCellMap[x][z];
 			if (cell->type == -2) {
 				cell->type = 0;
 			}
@@ -2583,7 +2677,7 @@ void Game::fixRoomData() {
 	}
 	for (int x = 0; x < kMapSizeX - 1; ++x) {
 		for (int z = 0; z < kMapSizeZ - 1; ++z) {
-			CellMap *cell = &_sceneCellMap[x][z];
+			CellMap* cell = &_sceneCellMap[x][z];
 			if (!cell->fixed && cell->type == 0 && cell->room2 == 0) {
 				fixRoomDataHelper(x, z, cell->room);
 			}
@@ -2595,8 +2689,9 @@ void Game::updateObjects() {
 	updateParticles();
 	drawParticles();
 }
+//int frameCounter = 0;
 void Game::doTick() {
-	
+
 	const int currentRoom = _room;
 
 	updateSceneAnimations();
@@ -2638,23 +2733,25 @@ void Game::doTick() {
 	if ((_params.cheats & kCheatLifeCounter) != 0) {
 		_objectsPtrTable[kObjPtrConrad]->specialData[1][18] = _varsTable[kVarConradLife];
 	}
-	
+	//frameCounter++;
+	//if (frameCounter % 3 == 0) {
 		runObject(_objectsPtrTable[kObjPtrWorld]->o_child);
-		if (_mainLoopCurrentMode == 1) {
-			GameObject* o_ply = getObjectByKey(_varsTable[kVarPlayerObject]);
-			CellMap* cell = getCellMapShr19(o_ply->xPosParent + o_ply->xPos, o_ply->zPosParent + o_ply->zPos);
-			if (cell->room != 0 && cell->room2 == 0) {
-				GameObject* o_room = _roomsTable[cell->room].o;
-				assert(o_room);
-				if (o_room->state != 1) {
-					while (o_room != _objectsPtrTable[kObjPtrWorld]) {
-						o_room->state = 1;
-						o_room = o_room->o_parent;
-					}
+	//}
+	if (_mainLoopCurrentMode == 1) {
+		GameObject* o_ply = getObjectByKey(_varsTable[kVarPlayerObject]);
+		CellMap* cell = getCellMapShr19(o_ply->xPosParent + o_ply->xPos, o_ply->zPosParent + o_ply->zPos);
+		if (cell->room != 0 && cell->room2 == 0) {
+			GameObject* o_room = _roomsTable[cell->room].o;
+			assert(o_room);
+			if (o_room->state != 1) {
+				while (o_room != _objectsPtrTable[kObjPtrWorld]) {
+					o_room->state = 1;
+					o_room = o_room->o_parent;
 				}
 			}
 		}
-	
+	}
+
 	//runObject(_objectsPtrTable[kObjPtrWorld]->o_child);
 
 
@@ -2760,7 +2857,7 @@ void Game::doTick() {
 		updateCollidingObjects();
 	}
 	++_ticks;
-	
+
 }
 void Game::doTickrender() {
 	const int currentRoom = _room;
@@ -2900,19 +2997,19 @@ void Game::doTickrender() {
 	}
 }
 
-void Game::initSprite(int type, int16_t key, SpriteImage *spr) {
+void Game::initSprite(int type, int16_t key, SpriteImage* spr) {
 	assert(type == kResType_SPR);
-	uint8_t *p = _res.getData(kResType_SPR, key, "BTMDESC");
+	uint8_t* p = _res.getData(kResType_SPR, key, "BTMDESC");
 	spr->w = READ_LE_UINT16(p);
 	spr->h = READ_LE_UINT16(p + 2);
 	spr->data = _res.getData(kResType_SPR, key, "SPRDATA");
 	spr->key = key;
 }
 
-uint8_t *Game::initMesh(int resType, int16_t key, uint8_t **verticesData, uint8_t **polygonsData, GameObject *o, uint8_t **poly3dData, int *env) {
+uint8_t* Game::initMesh(int resType, int16_t key, uint8_t** verticesData, uint8_t** polygonsData, GameObject* o, uint8_t** poly3dData, int* env) {
 	int num, index;
 	int16_t envKey, polyKey;
-	uint8_t *p_form3d, *p_poly3d, *p_envani, *p;
+	uint8_t* p_form3d, * p_poly3d, * p_envani, * p;
 
 	assert(resType == kResType_F3D);
 	p_form3d = _res.getData(resType, key, "FORM3D");
@@ -2921,15 +3018,17 @@ uint8_t *Game::initMesh(int resType, int16_t key, uint8_t **verticesData, uint8_
 	polyKey = READ_LE_UINT16(p_form3d + 16);
 	if (!env || *env == 0) {
 		envKey = polyKey;
-	} else {
-get_envani:
+	}
+	else {
+	get_envani:
 		num = *env & 255;
 		index = (*env >> 16) & 255;
 		p_envani = _res.getEnvAni(polyKey, num);
 		if (!p_envani) {
 			envKey = polyKey;
 			*env = 0;
-		} else {
+		}
+		else {
 			envKey = READ_LE_UINT16(p_envani + 2 + index * 2);
 			if (envKey == 0) {
 				if (o == _objectsPtrTable[kObjPtrConrad] && _conradEnvAni != 0) {
@@ -2941,13 +3040,15 @@ get_envani:
 				num = 0;
 				index = 0;
 				envKey = READ_LE_UINT16(p_envani + 2 + index * 2);
-			} else if (envKey < 0) {
+			}
+			else if (envKey < 0) {
 				index += envKey;
 				if (index < 0 || index >= 16) {
 					index = 0;
 				}
 				envKey = READ_LE_UINT16(p_envani + 2 + index * 2);
-			} else {
+			}
+			else {
 				++index;
 				if (index < 0 || index >= 16) {
 					index = 0;
@@ -2981,9 +3082,9 @@ get_envani:
 	return p_form3d;
 }
 
-bool Game::addSceneObjectToList(int xPos, int yPos, int zPos, GameObject *o) {
+bool Game::addSceneObjectToList(int xPos, int yPos, int zPos, GameObject* o) {
 	assert(_sceneObjectsCount < kSceneObjectsTableSize);
-	SceneObject *so = &_sceneObjectsTable[_sceneObjectsCount];
+	SceneObject* so = &_sceneObjectsTable[_sceneObjectsCount];
 	int16_t key = _res.getChild(kResType_ANI, o->anim.currentAnimKey);
 	if (key == 0) {
 		if (o->objKey == _cameraViewKey) {
@@ -2992,13 +3093,13 @@ bool Game::addSceneObjectToList(int xPos, int yPos, int zPos, GameObject *o) {
 		}
 		return false;
 	}
-	uint8_t *p_anifram = _res.getData(kResType_ANI, key, "ANIFRAM");
+	uint8_t* p_anifram = _res.getData(kResType_ANI, key, "ANIFRAM");
 	assert(p_anifram != 0);
 	o->anim.aniframData = p_anifram;
 	debug(kDebug_GAME, "Game::addSceneObjectToList o %p key %d tree %d", o, key, p_anifram[2]);
 	if (p_anifram[2] == 9) {
-		uint8_t *p_poly3d;
-		uint8_t *p_form3d = initMesh(kResType_F3D, READ_LE_UINT16(p_anifram), &so->verticesData, &so->polygonsData, o, &p_poly3d, &o->specialData[1][20]);
+		uint8_t* p_poly3d;
+		uint8_t* p_form3d = initMesh(kResType_F3D, READ_LE_UINT16(p_anifram), &so->verticesData, &so->polygonsData, o, &p_poly3d, &o->specialData[1][20]);
 		if (!p_form3d) {
 			warning("Game::addSceneObjectToList() failed loading mesh for '%s'", o->name);
 			return false;
@@ -3013,25 +3114,27 @@ bool Game::addSceneObjectToList(int xPos, int yPos, int zPos, GameObject *o) {
 		so->x = xPos;
 		so->y = yPos;
 		so->z = zPos;
-	} else {
+	}
+	else {
 		assert(p_anifram[2] == 1);
 		initSprite(kResType_SPR, READ_LE_UINT16(p_anifram), &so->spr);
 		so->verticesCount = 0;
 		so->xmin = so->zmin = 0;
 		so->xmax = so->zmax = 0;
-		GameObject *o_parent = o->o_parent;
-		const uint8_t *p_anikeyf = o_parent->anim.anikeyfData;
+		GameObject* o_parent = o->o_parent;
+		const uint8_t* p_anikeyf = o_parent->anim.anikeyfData;
 		if (o_parent && p_anikeyf && o == _objectsPtrTable[kObjPtrTarget]) {
 			const int xb = (((int8_t)p_anikeyf[16]) * 8 + (int16_t)READ_LE_UINT16(p_anikeyf + 2)) << 10;
 			const int zb = (((int8_t)p_anikeyf[17]) * 8 + (int16_t)READ_LE_UINT16(p_anikeyf + 6)) << 10;
-			const int cosy =  g_cos[o_parent->pitch & 1023];
+			const int cosy = g_cos[o_parent->pitch & 1023];
 			const int siny = -g_sin[o_parent->pitch & 1023];
 			const int xr = fixedMul(cosy, xb, kPosShift) - fixedMul(siny, zb, kPosShift);
 			const int zr = fixedMul(siny, xb, kPosShift) + fixedMul(cosy, zb, kPosShift);
 			so->x = o->xPosParent + o->xPos + xr;
 			so->y = o->yPosParent + o->yPos + (((int16_t)READ_LE_UINT16(p_anikeyf + 14)) << 11);
 			so->z = o->zPosParent + o->zPos + zr;
-		} else {
+		}
+		else {
 			so->x = xPos;
 			so->y = yPos;
 			so->z = zPos;
@@ -3055,7 +3158,7 @@ bool Game::addSceneObjectToList(int xPos, int yPos, int zPos, GameObject *o) {
 
 void Game::clearObjectsDrawList() {
 	for (int i = 0; i < _objectsDrawCount; ++i) {
-		GameObject *o = _objectsDrawList[i];
+		GameObject* o = _objectsDrawList[i];
 		if (o->flags[1] & 0x200) {
 			o->state = 0;
 		}
@@ -3066,9 +3169,9 @@ void Game::clearObjectsDrawList() {
 static int _compareBackToFront_xPos;
 static int _compareBackToFront_zPos;
 
-static int compareSceneObjectBackToFront(const void *p1, const void *p2) {
-	const SceneObject *o1 = *(const SceneObject **)p1;
-	const SceneObject *o2 = *(const SceneObject **)p2;
+static int compareSceneObjectBackToFront(const void* p1, const void* p2) {
+	const SceneObject* o1 = *(const SceneObject**)p1;
+	const SceneObject* o2 = *(const SceneObject**)p2;
 	const int dist1 = getSquareDistance(o1->x, o1->z, _compareBackToFront_xPos, _compareBackToFront_zPos, kPosShift);
 	const int dist2 = getSquareDistance(o2->x, o2->z, _compareBackToFront_xPos, _compareBackToFront_zPos, kPosShift);
 	return dist2 - dist1;
@@ -3078,7 +3181,7 @@ void Game::addObjectsToScene() {
 	_sceneObjectsCount = 0;
 	bool cameraInList = false;
 	for (int i = 0; i < _objectsDrawCount; ++i) {
-		GameObject *o = _objectsDrawList[i];
+		GameObject* o = _objectsDrawList[i];
 		if (!cameraInList && o->objKey == _cameraViewKey) {
 			cameraInList = true;
 		}
@@ -3089,7 +3192,8 @@ void Game::addObjectsToScene() {
 			int16_t dy = READ_LE_UINT16(o->anim.anikeyfData + 4);
 			yPos = o->yPos - (dy << 11);
 			zPos = o->zPos;
-		} else {
+		}
+		else {
 			xPos = o->xPosWorld;
 			yPos = o->yPosWorld;
 			zPos = o->zPosWorld;
@@ -3097,17 +3201,17 @@ void Game::addObjectsToScene() {
 		addSceneObjectToList(xPos, yPos, zPos, o);
 	}
 	if (!cameraInList) {
-		GameObject *o = getObjectByKey(_cameraViewKey);
+		GameObject* o = getObjectByKey(_cameraViewKey);
 		addSceneObjectToList(o->xPosWorld, o->yPosWorld, o->zPosWorld, o);
 	}
-	SceneObject *translucentObjects[kSceneObjectsTableSize];
+	SceneObject* translucentObjects[kSceneObjectsTableSize];
 	int translucentObjectsCount = 0;
-	SceneObject *bitmapObjects[kSceneObjectsTableSize];
+	SceneObject* bitmapObjects[kSceneObjectsTableSize];
 	int bitmapObjectsCount = 0;
 	// draw shadows
 	_render->setIgnoreDepth(false);
 	for (int i = 0; i < _sceneObjectsCount; ++i) {
-		SceneObject *so = &_sceneObjectsTable[i];
+		SceneObject* so = &_sceneObjectsTable[i];
 		const int flags = so->o->flags[1];
 		if (so->polygonsData && (so->polygonsData[0] & 0x80) && (flags & 0x2400) == 0) {
 			_render->beginObjectDraw(so->x, 0, so->z, so->pitch, kPosShift);
@@ -3117,16 +3221,18 @@ void Game::addObjectsToScene() {
 	}
 	// draw opaque objects
 	for (int i = 0; i < _sceneObjectsCount; ++i) {
-		SceneObject *so = &_sceneObjectsTable[i];
+		SceneObject* so = &_sceneObjectsTable[i];
 		if (isTranslucentSceneObject(so)) {
 			translucentObjects[translucentObjectsCount] = so;
 			++translucentObjectsCount;
-		} else {
+		}
+		else {
 			if (so->verticesCount != 0) {
 				_render->beginObjectDraw(so->x, so->y, so->z, so->pitch, kPosShift);
 				drawSceneObjectMesh(so, so->o->flags[1]);
 				_render->endObjectDraw();
-			} else {
+			}
+			else {
 				bitmapObjects[bitmapObjectsCount] = so;
 				++bitmapObjectsCount;
 			}
@@ -3134,10 +3240,10 @@ void Game::addObjectsToScene() {
 	}
 	_compareBackToFront_xPos = _xPosObserver;
 	_compareBackToFront_zPos = _zPosObserver;
-	qsort(translucentObjects, translucentObjectsCount, sizeof(SceneObject *), compareSceneObjectBackToFront);
+	qsort(translucentObjects, translucentObjectsCount, sizeof(SceneObject*), compareSceneObjectBackToFront);
 	// draw transparent
 	for (int i = 0; i < translucentObjectsCount; ++i) {
-		SceneObject *so = translucentObjects[i];
+		SceneObject* so = translucentObjects[i];
 		_render->beginObjectDraw(so->x, so->y, so->z, so->pitch, kPosShift);
 		drawSceneObjectMesh(so, so->o->flags[1]);
 		_render->endObjectDraw();
@@ -3145,14 +3251,14 @@ void Game::addObjectsToScene() {
 	// draw bitmap
 	_render->setIgnoreDepth(true);
 	for (int i = 0; i < bitmapObjectsCount; ++i) {
-		SceneObject *so = bitmapObjects[i];
+		SceneObject* so = bitmapObjects[i];
 		const int flags = so->o->flags[1];
-		SpriteImage *spr = &so->spr;
-		const uint8_t *texData = _spriteCache.getData(spr->key, spr->data);
+		SpriteImage* spr = &so->spr;
+		const uint8_t* texData = _spriteCache.getData(spr->key, spr->data);
 		const int scale = (flags & 0x20000) != 0 ? 2 : 1;
 		const int x0 = -scale * spr->w / 1;
 		const int y0 = -scale * spr->h / 2;
-		const int x1 = x0 + scale * spr->w*2;
+		const int x1 = x0 + scale * spr->w * 2;
 		const int y1 = y0 + scale * spr->h;
 		Vertex v[4];
 		v[0].x = x0; v[0].y = y0; v[0].z = 0;
@@ -3178,7 +3284,7 @@ void Game::clearKeyboardInput() {
 
 int Game::getCurrentInput() {
 	int16_t objKey = _varsTable[kVarPlayerObject];
-	GameObject *o = getObjectByKey(objKey);
+	GameObject* o = getObjectByKey(objKey);
 	if (!o) {
 		o = _objectsPtrTable[kObjPtrConrad];
 	}
@@ -3186,25 +3292,25 @@ int Game::getCurrentInput() {
 	return index;
 }
 
-void Game::clearMessage(ResMessageDescription *desc) {
+void Game::clearMessage(ResMessageDescription* desc) {
 	memset(desc, 0, sizeof(ResMessageDescription));
 	desc->font = 0;
 }
 
-bool Game::getMessage(int16_t key, uint32_t value, ResMessageDescription *desc) {
+bool Game::getMessage(int16_t key, uint32_t value, ResMessageDescription* desc) {
 	clearMessage(desc);
 	const int offset = _res.getOffsetForObjectKey(key);
 	return offset != -1 && _res.getMessageDescription(desc, value, offset);
 }
 
-bool Game::isTranslucentSceneObject(const SceneObject *so) const {
+bool Game::isTranslucentSceneObject(const SceneObject* so) const {
 	if (so->verticesCount == 0) { // sprite
 		return false;
 	}
 	if (_level == 4 && strncmp(so->o->name, "bassin", 6) == 0) {
 		return false;
 	}
-	const uint8_t *polygonsData = so->polygonsData;
+	const uint8_t* polygonsData = so->polygonsData;
 	if (polygonsData[0] & 0x80) {
 		const int shadowPolySize = -(int8_t)polygonsData[0];
 		polygonsData += shadowPolySize;
@@ -3223,9 +3329,9 @@ bool Game::isTranslucentSceneObject(const SceneObject *so) const {
 	return false;
 }
 
-void Game::drawSceneObjectShadow(SceneObject *so) {
+void Game::drawSceneObjectShadow(SceneObject* so) {
 	assert((so->polygonsData[0] & 0x80) != 0);
-	const uint8_t *p = &so->polygonsData[1];
+	const uint8_t* p = &so->polygonsData[1];
 	int count = *p & 15;
 	while (count > 0) {
 		assert((*p & 0x40) != 0); // byte indexed
@@ -3234,7 +3340,7 @@ void Game::drawSceneObjectShadow(SceneObject *so) {
 		for (int i = 0; i <= count; ++i) {
 			const int index = *p++;
 			assert(index < 9);
-			const int8_t *q = (int8_t *)so->verticesData + so->verticesCount * 4 + index * 2;
+			const int8_t* q = (int8_t*)so->verticesData + so->verticesCount * 4 + index * 2;
 			polygonPoints[i].x = q[0];
 			polygonPoints[i].z = q[1];
 			polygonPoints[i].y = (kGroundY - 1) * 2;
@@ -3244,9 +3350,9 @@ void Game::drawSceneObjectShadow(SceneObject *so) {
 	}
 }
 
-void Game::drawSceneObjectMesh(SceneObject *so, int flags) {
-	const uint8_t *polygonsData = so->polygonsData;
-	const uint8_t *verticesData = so->verticesData;
+void Game::drawSceneObjectMesh(SceneObject* so, int flags) {
+	const uint8_t* polygonsData = so->polygonsData;
+	const uint8_t* verticesData = so->verticesData;
 	const int verticesCount = so->verticesCount;
 	if (polygonsData[0] & 0x80) {
 		const int shadowPolySize = -(int8_t)polygonsData[0];
@@ -3267,7 +3373,8 @@ void Game::drawSceneObjectMesh(SceneObject *so, int flags) {
 				assert(index < verticesCount);
 				polygonPoints[i] = READ_VERTEX32(verticesData + index * 4);
 			}
-		} else {
+		}
+		else {
 			count &= 15;
 			for (int i = 0; i <= count; ++i) {
 				int index = READ_LE_UINT16(polygonsData); polygonsData += 2;
@@ -3297,10 +3404,11 @@ void Game::drawSceneObjectMesh(SceneObject *so, int flags) {
 		if (fill == 8 || fill == 11 || fill == 12) {
 			const int texture = color & 255;
 			const int primitive = (color >> 13) & 7;
-			SpriteImage *spr = &_sceneTextureImagesBuffer[texture];
+			SpriteImage* spr = &_sceneTextureImagesBuffer[texture];
 			if (!spr->data) {
 				debug(kDebug_GAME, "Game::drawSceneObjectMesh() no sprite for texture %d fill %d", texture, fill);
-			} else if (_level == 12 && so->o == _objectsPtrTable[kObjPtrConrad]) {
+			}
+			else if (_level == 12 && so->o == _objectsPtrTable[kObjPtrConrad]) {
 				//
 				// the ship model references the delphine software logo as textures (9 and 12).
 				// we workaround that by ignoring all textures.
@@ -3310,14 +3418,16 @@ void Game::drawSceneObjectMesh(SceneObject *so, int flags) {
 				//   fill 8 texture 11 primitive 0 dim 128,80
 				//   fill 8 texture 12 primitive 0 dim 64,16
 				//
-			} else {
-				const uint8_t *texData = _spriteCache.getData(spr->key, spr->data);
+			}
+			else {
+				const uint8_t* texData = _spriteCache.getData(spr->key, spr->data);
 				_render->drawPolygonTexture(polygonPoints, count + 1, primitive, texData, spr->w, spr->h, spr->key);
 			}
 			// 11 : transparent, pixel != 0 pixel + scolor
 			//  8 : palette remap, pixel + scolor
 			// 12 : pixel + 0
-		} else if (fill != 10) {
+		}
+		else if (fill != 10) {
 			const int primitive = color >> 8;
 			switch (primitive) {
 			case 0:
@@ -3373,21 +3483,21 @@ void Game::redrawScene() {
 	redrawSceneGroundWalls();
 }
 
-void Game::drawWall(const Vertex *vertices, int verticesCount, int texture, int type) {
+void Game::drawWall(const Vertex* vertices, int verticesCount, int texture, int type) {
 	texture &= 4095;
-	if (texture >= 0  && texture < 512) {
+	if (texture >= 0 && texture < 512) {
 		_sceneAnimationsTable[texture].type |= 0x10;
 		if (texture != 0 && texture != 1) {
-			SpriteImage *spr = &_sceneAnimationsTextureTable[texture];
+			SpriteImage* spr = &_sceneAnimationsTextureTable[texture];
 			if (spr->data) {
 				const bool maskedWall = (type == 10 || type == 11); // GRID_NS, GRID_WE
 				if (spr->w != 64 || (spr->h != 16 && spr->h != 64)) {
 					// warning("Unexpected wall sprite dimensions %d,%d key %d", spr->w, spr->h, spr->key);
 				}
-				const uint8_t *texData = _spriteCache.getData(spr->key, spr->data);
+				const uint8_t* texData = _spriteCache.getData(spr->key, spr->data);
 				if (maskedWall) { // make every 4 pixels transparent
 					const int texSize = spr->h * spr->w;
-					uint8_t *maskedTexData = (uint8_t *)alloca(texSize);
+					uint8_t* maskedTexData = (uint8_t*)alloca(texSize);
 					assert(((spr->h) & 7) == 0);
 					int offset = 0;
 					for (int y = 0; y < spr->h; y += 8) {
@@ -3403,7 +3513,7 @@ void Game::drawWall(const Vertex *vertices, int verticesCount, int texture, int 
 	}
 }
 
-static void initVerticesW(Vertex *quad, int x, int z, int dx, int dz) {
+static void initVerticesW(Vertex* quad, int x, int z, int dx, int dz) {
 	quad[0].x = x * 16 + dx;
 	quad[0].y = 0;
 	quad[0].z = (z + 1) * 16 + dz;
@@ -3421,7 +3531,7 @@ static void initVerticesW(Vertex *quad, int x, int z, int dx, int dz) {
 	quad[3].z = z * 16 + dz;
 }
 
-static void initVerticesS(Vertex *quad, int x, int z, int dx, int dz) {
+static void initVerticesS(Vertex* quad, int x, int z, int dx, int dz) {
 	quad[0].x = x * 16 + dx;
 	quad[0].y = 0;
 	quad[0].z = z * 16 + dz;
@@ -3439,7 +3549,7 @@ static void initVerticesS(Vertex *quad, int x, int z, int dx, int dz) {
 	quad[3].z = z * 16 + dz;
 }
 
-static void initVerticesE(Vertex *quad, int x, int z, int dx, int dz) {
+static void initVerticesE(Vertex* quad, int x, int z, int dx, int dz) {
 	quad[0].x = (x + 1) * 16 + dx;
 	quad[0].y = 0;
 	quad[0].z = z * 16 + dz;
@@ -3457,7 +3567,7 @@ static void initVerticesE(Vertex *quad, int x, int z, int dx, int dz) {
 	quad[3].z = (z + 1) * 16 + dz;
 }
 
-static void initVerticesN(Vertex *quad, int x, int z, int dx, int dz) {
+static void initVerticesN(Vertex* quad, int x, int z, int dx, int dz) {
 	quad[0].x = (x + 1) * 16 + dx;
 	quad[0].y = 0;
 	quad[0].z = (z + 1) * 16 + dz;
@@ -3475,7 +3585,7 @@ static void initVerticesN(Vertex *quad, int x, int z, int dx, int dz) {
 	quad[3].z = (z + 1) * 16 + dz;
 }
 
-static void initVerticesGround(Vertex *quad, int x, int z) {
+static void initVerticesGround(Vertex* quad, int x, int z) {
 	quad[0].x = x * 16;
 	quad[0].y = kGroundY;
 	quad[0].z = z * 16;
@@ -3493,7 +3603,7 @@ static void initVerticesGround(Vertex *quad, int x, int z) {
 	quad[3].z = (z + 1) * 16;
 }
 
-bool Game::redrawSceneGridCell(int x, int z, CellMap *cell) {
+bool Game::redrawSceneGridCell(int x, int z, CellMap* cell) {
 	Vertex quad[4];
 	initVerticesGround(quad, x, z);
 	if (cell->type != 20 && cell->type != 32) {
@@ -3501,9 +3611,9 @@ bool Game::redrawSceneGridCell(int x, int z, CellMap *cell) {
 		if (index >= 0 && index < 512) {
 			_sceneAnimationsTable[index].type |= 0x10;
 			if (index != 0 && index != 1) {
-				SpriteImage *spr = &_sceneAnimationsTextureTable[index];
+				SpriteImage* spr = &_sceneAnimationsTextureTable[index];
 				if (spr->data) {
-					const uint8_t *texData = _spriteCache.getData(spr->key, spr->data);
+					const uint8_t* texData = _spriteCache.getData(spr->key, spr->data);
 					_render->drawPolygonTexture(quad, 4, 9, texData, spr->w, spr->h, spr->key);
 				}
 			}
@@ -3584,7 +3694,7 @@ bool Game::redrawSceneGridCell(int x, int z, CellMap *cell) {
 			dx = -(63 - cell->data[1]);
 			initVerticesS(quad, x, z, dx / ((cell->texture[0] <= 0xFFF) ? 4 : 1), (16 - kWallThick) / 2);
 			drawWall(quad, 4, cell->texture[0], cell->type);
-			initVerticesS(quad, x, z, dx / ((cell->texture[1] <= 0xFFF) ? 4 : 1),  16 - (16 - kWallThick) / 2);
+			initVerticesS(quad, x, z, dx / ((cell->texture[1] <= 0xFFF) ? 4 : 1), 16 - (16 - kWallThick) / 2);
 			drawWall(quad, 4, cell->texture[1], cell->type);
 			break;
 		case 7: // door e-w
@@ -3592,7 +3702,7 @@ bool Game::redrawSceneGridCell(int x, int z, CellMap *cell) {
 			dx = (63 - cell->data[1]);
 			initVerticesS(quad, x, z, dx / ((cell->texture[0] <= 0xFFF) ? 4 : 1), (16 - kWallThick) / 2);
 			drawWall(quad, 4, cell->texture[0], cell->type);
-			initVerticesS(quad, x, z, dx / ((cell->texture[1] <= 0xFFF) ? 4 : 1),  16 - (16 - kWallThick) / 2);
+			initVerticesS(quad, x, z, dx / ((cell->texture[1] <= 0xFFF) ? 4 : 1), 16 - (16 - kWallThick) / 2);
 			drawWall(quad, 4, cell->texture[1], cell->type);
 			break;
 
@@ -3605,7 +3715,7 @@ bool Game::redrawSceneGridCell(int x, int z, CellMap *cell) {
 		case 11: // grid w-e
 			initVerticesS(quad, x, z, 0, (16 - kWallThick) / 2);
 			drawWall(quad, 4, cell->texture[0], cell->type);
-			initVerticesS(quad, x, z, 0,  16 - (16 - kWallThick) / 2);
+			initVerticesS(quad, x, z, 0, 16 - (16 - kWallThick) / 2);
 			drawWall(quad, 4, cell->texture[1], cell->type);
 			break;
 
@@ -3631,16 +3741,16 @@ void Game::redrawSceneGroundWalls() {
 	rayCastWall(_xPosObserver << 1, _zPosObserver << 1);
 	_render->clearScreen();
 	if (_decorTexture != 0) {
-		SpriteImage *spr = &_sceneAnimationsTextureTable[_decorTexture];
+		SpriteImage* spr = &_sceneAnimationsTextureTable[_decorTexture];
 		const int sprKey = spr->key;
 		debug(kDebug_GAME, "decorTexture %d w %d h %d (_decorTexture %d) rotY %d", spr->key, spr->w, spr->h, _decorTexture, _yRotObserver);
 
-		const uint8_t *p_btm = _res.getData(kResType_SPR, sprKey, "BTMDESC");
+		const uint8_t* p_btm = _res.getData(kResType_SPR, sprKey, "BTMDESC");
 		const int w = READ_LE_UINT16(p_btm);
 		const int h = READ_LE_UINT16(p_btm + 2);
 
-		const uint8_t *p_spr = _res.getData(kResType_SPR, sprKey, "SPRDATA");
-		const uint8_t *texData = _spriteCache.getData(sprKey, p_spr);
+		const uint8_t* p_spr = _res.getData(kResType_SPR, sprKey, "SPRDATA");
+		const uint8_t* texData = _spriteCache.getData(sprKey, p_spr);
 
 		_render->setupProjection(kProj2D);
 		_render->drawSprite(0, 0, texData, w, h, 9, sprKey);
@@ -3650,7 +3760,7 @@ void Game::redrawSceneGroundWalls() {
 	_render->setIgnoreDepth(false);
 	for (int x = 0; x < kMapSizeX; ++x) {
 		for (int z = 0; z < kMapSizeZ; ++z) {
-			CellMap *cell = &_sceneCellMap[x][z];
+			CellMap* cell = &_sceneCellMap[x][z];
 			if (cell->draw != 0) {
 				redrawSceneGridCell(x, z, cell);
 			}
@@ -3659,9 +3769,9 @@ void Game::redrawSceneGroundWalls() {
 
 }
 
-bool Game::findRoom(const CollisionSlot *colSlot, int room1, int room2) {
+bool Game::findRoom(const CollisionSlot* colSlot, int room1, int room2) {
 	for (; colSlot; colSlot = colSlot->next) {
-		const CellMap *cell = colSlot->cell;
+		const CellMap* cell = colSlot->cell;
 		if (room1 != 0 && (room1 == cell->room || room1 == cell->room2)) {
 			_varsTable[22] = room1;
 			return true;
@@ -3675,19 +3785,19 @@ bool Game::findRoom(const CollisionSlot *colSlot, int room1, int room2) {
 }
 
 bool Game::testObjectsRoom(int16_t obj1Key, int16_t obj2Key) {
-	GameObject *o1 = (obj1Key == 0) ? _currentObject : getObjectByKey(obj1Key);
+	GameObject* o1 = (obj1Key == 0) ? _currentObject : getObjectByKey(obj1Key);
 	if (!o1 || !o1->colSlot) {
 		return false;
 	}
-	GameObject *o2 = getObjectByKey(obj2Key);
+	GameObject* o2 = getObjectByKey(obj2Key);
 	if (!o2 || !o2->colSlot) {
 		return false;
 	}
-	const CellMap *o1_cell = o1->colSlot->cell;
+	const CellMap* o1_cell = o1->colSlot->cell;
 	if (findRoom(o2->colSlot, o1_cell->room, o1_cell->room2)) {
 		return true;
 	}
-	const CellMap *o2_cell = o2->colSlot->cell;
+	const CellMap* o2_cell = o2->colSlot->cell;
 	if (findRoom(o1->colSlot, o2_cell->room, o2_cell->room2)) {
 		return true;
 	}
@@ -3695,9 +3805,9 @@ bool Game::testObjectsRoom(int16_t obj1Key, int16_t obj2Key) {
 }
 
 void Game::readInputEvents() {
-	GameObject *o = _objectsPtrTable[kObjPtrGun];
+	GameObject* o = _objectsPtrTable[kObjPtrGun];
 	if (o->specialData[1][22] != 0x1000 && o->customData[1] == 0 && o->customData[0] == 0) {
-		GameObject *o_tmp = o;
+		GameObject* o_tmp = o;
 		while (o_tmp->o_next) {
 			o_tmp = o_tmp->o_next;
 		}
@@ -3709,7 +3819,7 @@ void Game::readInputEvents() {
 		if (_objectsPtrTable[kObjPtrGun]) {
 			_varsTable[15] = _objectsPtrTable[kObjPtrGun]->objKey;
 			if (getMessage(_objectsPtrTable[kObjPtrGun]->objKey, 0, &_tmpMsg)) {
-				_objectsPtrTable[kObjPtrGun]->text = (const char *)_tmpMsg.data;
+				_objectsPtrTable[kObjPtrGun]->text = (const char*)_tmpMsg.data;
 			}
 		}
 		setObjectParent(o, _objectsPtrTable[kObjPtrCimetiere]);
@@ -3717,7 +3827,7 @@ void Game::readInputEvents() {
 	o = _objectsPtrTable[kObjPtrProj];
 	if (o && o->customData[0] == 0) {
 		if (o->o_next) {
-			GameObject *o_tmp = o;
+			GameObject* o_tmp = o;
 			while (o_tmp->o_next) {
 				o_tmp = o_tmp->o_next;
 			}
@@ -3727,12 +3837,13 @@ void Game::readInputEvents() {
 			_objectsPtrTable[kObjPtrProj] = _objectsPtrTable[kObjPtrInventaire]->o_child->o_next->o_next->o_child;
 			if (_objectsPtrTable[kObjPtrProj]) {
 				if (getMessage(_objectsPtrTable[kObjPtrProj]->objKey, 0, &_tmpMsg)) {
-					_objectsPtrTable[kObjPtrProj]->text = (const char *)_tmpMsg.data;
+					_objectsPtrTable[kObjPtrProj]->text = (const char*)_tmpMsg.data;
 				}
 			}
 			setObjectParent(o, _objectsPtrTable[kObjPtrCimetiere]);
-		} else {
-			GameObject *o_prev = _objectsPtrTable[kObjPtrProj];
+		}
+		else {
+			GameObject* o_prev = _objectsPtrTable[kObjPtrProj];
 			setObjectParent(o_prev, _objectsPtrTable[kObjPtrCimetiere]);
 			_objectsPtrTable[kObjPtrProj] = _objectsPtrTable[1]->o_child->o_next->o_next->o_child = 0;
 		}
@@ -3743,7 +3854,7 @@ void Game::readInputEvents() {
 			if (inp.numKeys[4]) {
 				inp.numKeys[4] = false;
 				if (_objectsPtrTable[kObjPtrGun] && _objectsPtrTable[kObjPtrGun]->o_next) {
-					GameObject *tmpObj = _objectsPtrTable[kObjPtrGun];
+					GameObject* tmpObj = _objectsPtrTable[kObjPtrGun];
 					while (tmpObj->o_next) {
 						tmpObj = tmpObj->o_next;
 					}
@@ -3755,7 +3866,7 @@ void Game::readInputEvents() {
 					if (_objectsPtrTable[kObjPtrGun]) {
 						_varsTable[15] = _objectsPtrTable[kObjPtrGun]->objKey;
 						if (getMessage(_objectsPtrTable[kObjPtrGun]->objKey, 0, &_tmpMsg) && _tmpMsg.data) {
-							_objectsPtrTable[kObjPtrGun]->text = (const char *)_tmpMsg.data;
+							_objectsPtrTable[kObjPtrGun]->text = (const char*)_tmpMsg.data;
 						}
 					}
 				}
@@ -3763,7 +3874,7 @@ void Game::readInputEvents() {
 			if (inp.numKeys[5]) {
 				inp.numKeys[5] = false;
 				if (_objectsPtrTable[kObjPtrUtil] && _objectsPtrTable[kObjPtrUtil]->o_next) {
-					GameObject *tmpObj = _objectsPtrTable[kObjPtrUtil];
+					GameObject* tmpObj = _objectsPtrTable[kObjPtrUtil];
 					while (tmpObj->o_next) {
 						tmpObj = tmpObj->o_next;
 					}
@@ -3774,7 +3885,7 @@ void Game::readInputEvents() {
 					if (_objectsPtrTable[kObjPtrUtil]) {
 						_varsTable[23] = _objectsPtrTable[kObjPtrUtil]->objKey;
 						if (getMessage(_objectsPtrTable[kObjPtrUtil]->objKey, 0, &_tmpMsg) && _tmpMsg.data) {
-							_objectsPtrTable[kObjPtrUtil]->text = (const char *)_tmpMsg.data;
+							_objectsPtrTable[kObjPtrUtil]->text = (const char*)_tmpMsg.data;
 						}
 					}
 				}
@@ -3782,7 +3893,7 @@ void Game::readInputEvents() {
 			if (inp.numKeys[3]) {
 				inp.numKeys[3] = false;
 				if (_objectsPtrTable[kObjPtrProj] && _objectsPtrTable[kObjPtrProj]->o_next) {
-					GameObject *tmpObj = _objectsPtrTable[kObjPtrProj];
+					GameObject* tmpObj = _objectsPtrTable[kObjPtrProj];
 					while (tmpObj->o_next) {
 						tmpObj = tmpObj->o_next;
 					}
@@ -3792,7 +3903,7 @@ void Game::readInputEvents() {
 					_objectsPtrTable[kObjPtrProj] = _objectsPtrTable[kObjPtrInventaire]->o_child->o_next->o_next->o_child;
 					if (_objectsPtrTable[kObjPtrProj]) {
 						if (getMessage(_objectsPtrTable[kObjPtrProj]->objKey, 0, &_tmpMsg) && _tmpMsg.data) {
-							_objectsPtrTable[kObjPtrProj]->text = (const char *)_tmpMsg.data;
+							_objectsPtrTable[kObjPtrProj]->text = (const char*)_tmpMsg.data;
 						}
 					}
 				}
@@ -3800,7 +3911,7 @@ void Game::readInputEvents() {
 			if (inp.numKeys[2]) {
 				inp.numKeys[2] = false;
 				if (_objectsPtrTable[kObjPtrShield] && _objectsPtrTable[kObjPtrShield]->o_next) {
-					GameObject *tmpObj = _objectsPtrTable[kObjPtrShield];
+					GameObject* tmpObj = _objectsPtrTable[kObjPtrShield];
 					while (tmpObj->o_next) {
 						tmpObj = tmpObj->o_next;
 					}
@@ -3811,7 +3922,7 @@ void Game::readInputEvents() {
 					if (_objectsPtrTable[kObjPtrShield]) {
 						_varsTable[25] = _objectsPtrTable[kObjPtrShield]->objKey;
 						if (getMessage(_objectsPtrTable[kObjPtrShield]->objKey, 0, &_tmpMsg) && _tmpMsg.data) {
-							_objectsPtrTable[kObjPtrShield]->text = (const char *)_tmpMsg.data;
+							_objectsPtrTable[kObjPtrShield]->text = (const char*)_tmpMsg.data;
 						}
 						_objectsPtrTable[kObjPtrConrad]->specialData[1][20] = (_objectsPtrTable[kObjPtrShield]->specialData[1][22] == 1) ? 5 : 0;
 					}
@@ -3820,7 +3931,7 @@ void Game::readInputEvents() {
 			if (inp.numKeys[1]) {
 				inp.numKeys[1] = false;
 				if (_objectsPtrTable[kObjPtrScan] && _objectsPtrTable[kObjPtrScan]->o_next) {
-					GameObject *tmpObj = _objectsPtrTable[kObjPtrScan];
+					GameObject* tmpObj = _objectsPtrTable[kObjPtrScan];
 					while (tmpObj->o_next) {
 						tmpObj = tmpObj->o_next;
 					}
@@ -3831,7 +3942,7 @@ void Game::readInputEvents() {
 					if (_objectsPtrTable[kObjPtrScan]) {
 						_varsTable[24] = _objectsPtrTable[kObjPtrScan]->objKey;
 						if (getMessage(_objectsPtrTable[kObjPtrScan]->objKey, 0, &_tmpMsg) && _tmpMsg.data) {
-							_objectsPtrTable[kObjPtrScan]->text = (const char *)_tmpMsg.data;
+							_objectsPtrTable[kObjPtrScan]->text = (const char*)_tmpMsg.data;
 						}
 					}
 				}
@@ -3846,7 +3957,8 @@ void Game::readInputEvents() {
 				if (_cameraUsingGunDist != _cameraDefaultDist) {
 					fixCamera();
 				}
-			} else {
+			}
+			else {
 				_cameraStandingDist = !_cameraStandingDist;
 				if (_cameraStandingDist != _cameraDefaultDist) {
 					fixCamera();
@@ -3860,7 +3972,7 @@ void Game::setupScannerObjects() {
 	_scannerCounter = 0;
 	if (_objectsPtrTable[kObjPtrFondScanInfo]) {
 		const int16_t key = _res.getChild(kResType_ANI, _objectsPtrTable[kObjPtrFondScanInfo]->anim.currentAnimKey);
-		const uint8_t *p_anifram = _res.getData(kResType_ANI, key, "ANIFRAM");
+		const uint8_t* p_anifram = _res.getData(kResType_ANI, key, "ANIFRAM");
 		_scannerBackgroundKey = READ_LE_UINT16(p_anifram);
 	}
 }
@@ -3876,13 +3988,14 @@ void Game::updateScanner() {
 	}
 	if (_scannerCounter > 0) {
 		--_scannerCounter;
-	} else {
+	}
+	else {
 		_scannerCounter = 10;
 		_objectsPtrTable[kObjPtrConrad]->specialData[1][18] -= _objectsPtrTable[kObjPtrScan]->specialData[1][18];
 		if (_objectsPtrTable[kObjPtrConrad]->specialData[1][18] <= 0) {
 			_objectsPtrTable[kObjPtrConrad]->specialData[1][18] = 1;
 			while (_objectsPtrTable[kObjPtrScan]->specialData[1][21] != 2 && _objectsPtrTable[kObjPtrScan]->specialData[1][22] != 0xFFFF) {
-				GameObject *o = _objectsPtrTable[kObjPtrScan];
+				GameObject* o = _objectsPtrTable[kObjPtrScan];
 				while (o->o_next) {
 					o = o->o_next;
 				}
@@ -3894,7 +4007,7 @@ void Game::updateScanner() {
 			if (_objectsPtrTable[kObjPtrScan]) {
 				_varsTable[24] = _objectsPtrTable[kObjPtrScan]->objKey;
 				if (getMessage(_objectsPtrTable[kObjPtrScan]->objKey, 0, &_tmpMsg)) {
-					_objectsPtrTable[kObjPtrScan]->text = (const char *)_tmpMsg.data;
+					_objectsPtrTable[kObjPtrScan]->text = (const char*)_tmpMsg.data;
 				}
 			}
 		}
@@ -3908,7 +4021,7 @@ void Game::drawScanner() {
 	if (_objectsPtrTable[kObjPtrConrad]->specialData[1][18] > 1) {
 		int16_t objKey = _varsTable[16];
 		if (objKey != 0) {
-			GameObject *o = getObjectByKey(objKey);
+			GameObject* o = getObjectByKey(objKey);
 			if (o) {
 				static const int kTypes[] = {
 					1, 2, 4, 8, 16, 32, 0, 128, // 100
@@ -3928,14 +4041,15 @@ void Game::drawScanner() {
 				const int y = _res._userConfig.iconLrScanY;
 				drawSprite(x, y, _scannerBackgroundKey);
 				if (_tmpMsg.data) {
-					drawString(x + _tmpMsg.xPos, y + _tmpMsg.yPos, (const char *)_tmpMsg.data, _tmpMsg.font, 0);
+					drawString(x + _tmpMsg.xPos, y + _tmpMsg.yPos, (const char*)_tmpMsg.data, _tmpMsg.font, 0);
 					if (o->specialData[1][18] == 0xFFFF) {
 						if (getMessage(_worldObjectKey, 93, &_tmpMsg)) {
-							drawString(x + _tmpMsg.xPos, y + _tmpMsg.yPos, (const char *)_tmpMsg.data, _tmpMsg.font, 0);
+							drawString(x + _tmpMsg.xPos, y + _tmpMsg.yPos, (const char*)_tmpMsg.data, _tmpMsg.font, 0);
 						}
-					} else if (o->specialData[1][18] > 0) {
+					}
+					else if (o->specialData[1][18] > 0) {
 						if (getMessage(_worldObjectKey, 91, &_tmpMsg)) {
-							drawString(x + _tmpMsg.xPos, y + _tmpMsg.yPos, (const char *)_tmpMsg.data, _tmpMsg.font, 0);
+							drawString(x + _tmpMsg.xPos, y + _tmpMsg.yPos, (const char*)_tmpMsg.data, _tmpMsg.font, 0);
 						}
 						int percent = 100;
 						if (o->specialData[1][22] != 64) {
@@ -3944,17 +4058,17 @@ void Game::drawScanner() {
 						char buf[64];
 						snprintf(buf, sizeof(buf), "%3d%%", percent);
 						if (getMessage(_worldObjectKey, 92, &_tmpMsg)) {
-							drawString(x + _tmpMsg.xPos - 26, y + _tmpMsg.yPos + 12, (const char *)_tmpMsg.data, _tmpMsg.font, 0);
+							drawString(x + _tmpMsg.xPos - 26, y + _tmpMsg.yPos + 12, (const char*)_tmpMsg.data, _tmpMsg.font, 0);
 						}
-                                        }
+					}
 				}
 			}
 		}
 	}
 }
 
-static void drawInfoPanelChar(DrawBuffer *buf, int x, int y, int w, int h, const uint8_t *src) {
-	uint8_t *dst = buf->ptr + y * buf->pitch + x;
+static void drawInfoPanelChar(DrawBuffer* buf, int x, int y, int w, int h, const uint8_t* src) {
+	uint8_t* dst = buf->ptr + y * buf->pitch + x;
 	while (h--) {
 		memcpy(dst, src, w);
 		dst += buf->pitch;
@@ -3974,18 +4088,19 @@ static const struct {
 };
 
 void Game::setupInventoryObjects() {
-	GameObject *o = _objectsPtrTable[kObjPtrInventaire]->o_child;
+	GameObject* o = _objectsPtrTable[kObjPtrInventaire]->o_child;
 	for (int i = 0; i < ARRAYSIZE(_gameInventoryObjectsVars); ++i) {
-		GameObject *o_tmp = o->o_child;
+		GameObject* o_tmp = o->o_child;
 		if (o_tmp) {
 			if (_gameInventoryObjectsVars[i].var != -1) {
 				_varsTable[_gameInventoryObjectsVars[i].var] = o_tmp->objKey;
 			}
 			if (getMessage(o_tmp->objKey, 0, &_tmpMsg)) {
-				o_tmp->text = (const char *)_tmpMsg.data;
+				o_tmp->text = (const char*)_tmpMsg.data;
 			}
 			_objectsPtrTable[_gameInventoryObjectsVars[i].obj] = o_tmp;
-		} else {
+		}
+		else {
 			debug(kDebug_GAME, "Game::setupInventoryObjects() missing inventory object index %d", i);
 		}
 		if (_gameInventoryObjectsVars[i].obj == 7) {
@@ -3998,8 +4113,8 @@ void Game::setupInventoryObjects() {
 	}
 
 	int16_t nextKey, childKey, sprKey;
-	GameObjectAnimation *anim = &_objectsPtrTable[kObjPtrInventaire]->anim;
-	const uint8_t *p_anifram = anim->aniframData;
+	GameObjectAnimation* anim = &_objectsPtrTable[kObjPtrInventaire]->anim;
+	const uint8_t* p_anifram = anim->aniframData;
 	_inventoryBackgroundKey = READ_LE_UINT16(p_anifram);
 	nextKey = anim->currentAnimKey;
 	for (int i = 0; i < 4; ++i) {
@@ -4038,22 +4153,22 @@ void Game::setupInventoryObjects() {
 	static const int y[] = { 0, 20, 50 };
 	for (int i = 0; i < 3; ++i) {
 		if (getMessage(_objectsPtrTable[kObjPtrInventaire]->objKey, i, &_tmpMsg)) {
-			drawString(8, y[i], (const char *)_tmpMsg.data, _tmpMsg.font, 0);
+			drawString(8, y[i], (const char*)_tmpMsg.data, _tmpMsg.font, 0);
 		}
 	}
 }
 
 struct SavedInventoryObject {
-	char *name;
-	char *parentName;
+	char* name;
+	char* parentName;
 	uint8_t customData[12];
-	SavedInventoryObject *next;
+	SavedInventoryObject* next;
 };
 
-static SavedInventoryObject *_savedInventoryObjects;
+static SavedInventoryObject* _savedInventoryObjects;
 
-static SavedInventoryObject *saveInventoryObject(GameObject *o) {
-	SavedInventoryObject *sio = (SavedInventoryObject *)calloc(1, sizeof(SavedInventoryObject));
+static SavedInventoryObject* saveInventoryObject(GameObject* o) {
+	SavedInventoryObject* sio = (SavedInventoryObject*)calloc(1, sizeof(SavedInventoryObject));
 	if (sio) {
 		if (_savedInventoryObjects) {
 			_savedInventoryObjects->next = sio;
@@ -4078,8 +4193,8 @@ void Game::saveInventoryObjects() {
 }
 
 void Game::loadInventoryObjects() {
-	for (SavedInventoryObject *sio = _savedInventoryObjects; sio; sio = sio->next) {
-		GameObject *o = findObjectByName(_objectsPtrTable[kObjPtrWorld], sio->name);
+	for (SavedInventoryObject* sio = _savedInventoryObjects; sio; sio = sio->next) {
+		GameObject* o = findObjectByName(_objectsPtrTable[kObjPtrWorld], sio->name);
 		if (!o) {
 			debug(kDebug_GAME, "Game::loadInventoryObjects() dropping '%s' when loading level %d", sio->name, _level);
 			continue;
@@ -4105,7 +4220,7 @@ void Game::loadInventoryObjects() {
 		}
 	}
 
-	GameObject *o;
+	GameObject* o;
 	if ((o = findObjectByName(_objectsPtrTable[kObjPtrWorld], "bouclier_normal"))) {
 		setObjectParent(o, _objectsPtrTable[kObjPtrWorld]);
 	}
@@ -4119,14 +4234,14 @@ void Game::loadInventoryObjects() {
 		setObjectParent(o, _objectsPtrTable[kObjPtrWorld]);
 	}
 
-	SavedInventoryObject *sio = _savedInventoryObjects;
+	SavedInventoryObject* sio = _savedInventoryObjects;
 	while (sio) {
-		GameObject *o = findObjectByName(_objectsPtrTable[kObjPtrWorld], sio->name);
-		GameObject *o_parent = findObjectByName(_objectsPtrTable[kObjPtrWorld], sio->parentName);
+		GameObject* o = findObjectByName(_objectsPtrTable[kObjPtrWorld], sio->name);
+		GameObject* o_parent = findObjectByName(_objectsPtrTable[kObjPtrWorld], sio->parentName);
 		if (o && o_parent) {
 			setObjectParent(o, o_parent);
 		}
-		SavedInventoryObject *next = sio->next;
+		SavedInventoryObject* next = sio->next;
 		free(sio->name);
 		free(sio->parentName);
 		free(sio);
@@ -4135,18 +4250,18 @@ void Game::loadInventoryObjects() {
 	_savedInventoryObjects = 0;
 }
 
-GameObject *Game::findObjectByName(GameObject *o, const char *name) {
+GameObject* Game::findObjectByName(GameObject* o, const char* name) {
 	if (strcmp(o->name, name) == 0) {
 		return o;
 	}
 	if (o->o_child) {
-		GameObject *o_tmp = findObjectByName(o->o_child, name);
+		GameObject* o_tmp = findObjectByName(o->o_child, name);
 		if (o_tmp) {
 			return o_tmp;
 		}
 	}
 	if (o->o_next) {
-		GameObject *o_tmp = findObjectByName(o->o_next, name);
+		GameObject* o_tmp = findObjectByName(o->o_next, name);
 		if (o_tmp) {
 			return o_tmp;
 		}
@@ -4161,7 +4276,7 @@ void Game::addParticle(int xPos, int yPos, int zPos, int rnd, int dx, int dy, in
 	}
 	assert(_particlesCount + count <= kParticlesTableSize);
 	for (int i = 0; i < count; ++i) {
-		Particle *part = &_particlesTable[_particlesCount + i];
+		Particle* part = &_particlesTable[_particlesCount + i];
 		memset(part, 0, sizeof(Particle));
 		part->xPos = xPos;
 		part->yPos = (kGroundY << 15) + yPos;
@@ -4176,18 +4291,18 @@ void Game::addParticle(int xPos, int yPos, int zPos, int rnd, int dx, int dy, in
 	_particlesCount += count;
 }
 
-void Game::addParticleBlob(SceneObject *so, int xPos, int yPos, int zPos, int rnd, int ticks, int fl) {
+void Game::addParticleBlob(SceneObject* so, int xPos, int yPos, int zPos, int rnd, int ticks, int fl) {
 	if (_particlesCount < kParticlesTableSize) {
-		Particle *part = &_particlesTable[_particlesCount];
+		Particle* part = &_particlesTable[_particlesCount];
 		memset(part, 0, sizeof(Particle));
 		Vec_xz v(xPos, zPos);
 		v.rotate(so->pitch, 3);
 		part->xPos = v.x + so->x;
 		part->zPos = v.z + so->z;
 		part->yPos = (yPos << 13) + so->y;
-		part->dx =  _rnd.getRandomNumberShift(rnd);
+		part->dx = _rnd.getRandomNumberShift(rnd);
 		part->dy = -_rnd.getRandomNumberShift(rnd);
-		part->dz =  _rnd.getRandomNumberShift(rnd);
+		part->dz = _rnd.getRandomNumberShift(rnd);
 		part->ticks = ticks + (_rnd.getRandomNumber() >> 9);
 		part->fl = fl;
 		part->speed = 0;
@@ -4198,19 +4313,20 @@ void Game::addParticleBlob(SceneObject *so, int xPos, int yPos, int zPos, int rn
 
 void Game::updateParticles() {
 	for (int i = 0; i < _particlesCount; ) {
-		Particle *part = &_particlesTable[i];
+		Particle* part = &_particlesTable[i];
 		--part->ticks;
 		if (part->ticks <= 0) {
 			--_particlesCount;
 			if (i < _particlesCount) {
 				_particlesTable[i] = _particlesTable[i + 1];
 			}
-		} else {
+		}
+		else {
 			++i;
 		}
 	}
 	for (int i = 0; i < _particlesCount; ++i) {
-		Particle *part = &_particlesTable[i];
+		Particle* part = &_particlesTable[i];
 		part->dy += 1 << 12;
 		if (part->yPos >= (kGroundY << 15)) {
 			part->yPos = kGroundY << 15;
@@ -4245,7 +4361,7 @@ static const uint8_t blobTex[16 * 16] = {
 
 void Game::drawParticles() {
 	for (int i = 0; i < _particlesCount; ++i) {
-		Particle *part = &_particlesTable[i];
+		Particle* part = &_particlesTable[i];
 		int color;
 		if (part->isBlob) {
 			int clut[4];
@@ -4264,17 +4380,19 @@ void Game::drawParticles() {
 				static const int kW = 2;
 				Vertex v[4];
 				v[0].x = -kW; v[0].y = -kW; v[0].z = 0;
-				v[1].x =  kW; v[1].y = -kW; v[1].z = 0;
-				v[2].x =  kW; v[2].y =  kW; v[2].z = 0;
-				v[3].x = -kW; v[3].y =  kW; v[3].z = 0;
+				v[1].x = kW; v[1].y = -kW; v[1].z = 0;
+				v[2].x = kW; v[2].y = kW; v[2].z = 0;
+				v[3].x = -kW; v[3].y = kW; v[3].z = 0;
 				_render->beginObjectDraw(part->xPos, part->yPos, part->zPos, _yInvRotObserver, kPosShift);
 				_render->drawPolygonTexture(v, 4, 0, tmpTex, 16, 16, kTexKeyBlob + clut[1]);
 				_render->endObjectDraw();
 				continue;
 			}
-		} else if (part->fl & 0x8000) {
+		}
+		else if (part->fl & 0x8000) {
 			color = _mrkBuffer[254 + (part->fl & 255)];
-		} else {
+		}
+		else {
 			switch (part->fl & 15) {
 			case 0:
 				color = kFlatColorShadow;
@@ -4310,7 +4428,7 @@ void Game::drawParticles() {
 void Game::initSprites() {
 	int16_t key = _res.getChild(kResType_ANI, _objectsPtrTable[kObjPtrCible]->anim.currentAnimKey);
 	for (int i = 0; i < 2; ++i) {
-		const uint8_t *p_anifram = _res.getData(kResType_ANI, key, "ANIFRAM");
+		const uint8_t* p_anifram = _res.getData(kResType_ANI, key, "ANIFRAM");
 		assert(p_anifram);
 		_spritesTable[i] = READ_LE_UINT16(p_anifram);
 		key = _res.getNext(kResType_ANI, key);
@@ -4320,7 +4438,8 @@ void Game::initSprites() {
 void Game::updateScreen() {
 	if (_objectsPtrTable[kObjPtrConrad]->specialData[1][18] <= 1) {
 		_snd.playSfx(_objectsPtrTable[kObjPtrWorld]->objKey, _res._sndKeysTable[1]);
-	} else if (_objectsPtrTable[kObjPtrConrad]->specialData[1][18] < 100 && _objectsPtrTable[kObjPtrConrad]->specialData[1][18] > 1) {
+	}
+	else if (_objectsPtrTable[kObjPtrConrad]->specialData[1][18] < 100 && _objectsPtrTable[kObjPtrConrad]->specialData[1][18] > 1) {
 		_snd.playSfx(_objectsPtrTable[kObjPtrWorld]->objKey, _res._sndKeysTable[1]);
 	}
 	displayTarget(kScreenWidth / 2, kScreenHeight / 2);
@@ -4338,7 +4457,7 @@ void Game::updateScreen() {
 
 void Game::printGameMessages() {
 	for (int i = 0; i < kPlayerMessagesTableSize; ++i) {
-		GamePlayerMessage *msg = &_playerMessagesTable[i];
+		GamePlayerMessage* msg = &_playerMessagesTable[i];
 		if (msg->desc.duration > 0) {
 			msg->visible = false;
 			if (1) { // soundOn
@@ -4362,7 +4481,7 @@ void Game::printGameMessages() {
 				if (msg->visible) {
 					assert(msg->desc.data);
 					memset(&_drawCharBuf, 0, sizeof(_drawCharBuf));
-					drawString(msg->desc.xPos, msg->desc.yPos, (const char *)msg->desc.data, msg->desc.font, 0);
+					drawString(msg->desc.xPos, msg->desc.yPos, (const char*)msg->desc.data, msg->desc.font, 0);
 				}
 			}
 			--msg->desc.duration;
@@ -4371,7 +4490,8 @@ void Game::printGameMessages() {
 					msg->desc.duration = 1;
 				}
 			}
-		} else if (msg->desc.data) {
+		}
+		else if (msg->desc.data) {
 			memset(msg, 0, sizeof(GamePlayerMessage));
 			--_playerMessagesCount;
 		}
@@ -4382,8 +4502,8 @@ bool Game::sendMessage(int msg, int16_t destObjKey) {
 	if (destObjKey == 0) {
 		return true;
 	}
-	CollisionSlot *colSlot = 0;
-	GameObject *o = 0;
+	CollisionSlot* colSlot = 0;
+	GameObject* o = 0;
 	if (destObjKey == -1) {
 		o = _currentObject;
 		const int xMap = _currentObject->xPosParent + _currentObject->xPos;
@@ -4392,7 +4512,8 @@ bool Game::sendMessage(int msg, int16_t destObjKey) {
 		if (colSlot) {
 			o = colSlot->o;
 		}
-	} else {
+	}
+	else {
 		o = getObjectByKey(destObjKey);
 		if (!o) {
 			warning("sendMessage: object %d not found", destObjKey);
@@ -4426,7 +4547,8 @@ bool Game::sendMessage(int msg, int16_t destObjKey) {
 			if (destObjKey != -1) {
 				return true;
 			}
-		} else if (o->scriptStateData) {
+		}
+		else if (o->scriptStateData) {
 			bool hasMsg = false;
 			int messagesCount = o->scriptStateData[3];
 			if (messagesCount != 0) {
@@ -4435,7 +4557,7 @@ bool Game::sendMessage(int msg, int16_t destObjKey) {
 					warning("Game::executeObjectScript() '%s' msg index %d out of bounds (count %d)", o->name, num, _res._msgOffsetsTableCount);
 					return -1;
 				}
-				const uint8_t *msgList = _res.getMsgData(num);
+				const uint8_t* msgList = _res.getMsgData(num);
 				for (int i = 0; i < messagesCount; ++i) {
 					if (msgList[i] == msg) {
 						hasMsg = true;
@@ -4449,7 +4571,7 @@ bool Game::sendMessage(int msg, int16_t destObjKey) {
 					addToChangedObjects(o);
 				}
 				bool alreadyInList = false;
-				for (GameMessage *m_cur = o->msg; m_cur; m_cur = m_cur->next) {
+				for (GameMessage* m_cur = o->msg; m_cur; m_cur = m_cur->next) {
 					if (m_cur->objKey == _currentObject->objKey && m_cur->num == msg) {
 						m_cur->ticks = 0;
 						alreadyInList = true;
@@ -4457,7 +4579,7 @@ bool Game::sendMessage(int msg, int16_t destObjKey) {
 					}
 				}
 				if (!alreadyInList) {
-					GameMessage *m_new = (GameMessage *)calloc(1, sizeof(GameMessage));
+					GameMessage* m_new = (GameMessage*)calloc(1, sizeof(GameMessage));
 					m_new->next = o->msg;
 					o->msg = m_new;
 					m_new->objKey = _currentObject->objKey;
@@ -4469,15 +4591,16 @@ bool Game::sendMessage(int msg, int16_t destObjKey) {
 						int lifeCounterObj = _currentObject->specialData[1][18];
 						int lifeCounter = o->specialData[1][18];
 						if (typeObj == 8 && (specObj == 16 || specObj == 64 || specObj == 128)) {
-							GameObject *o_shoot = _objectsPtrTable[kObjPtrConrad];
+							GameObject* o_shoot = _objectsPtrTable[kObjPtrConrad];
 							const int dx = ((o_shoot->xPosParent + o_shoot->xPos) - (o->xPosParent + o->xPos)) >> kPosShift;
 							const int dz = ((o_shoot->zPosParent + o_shoot->zPos) - (o->zPosParent + o->zPos)) >> kPosShift;
 							const int distance = dx * dx + dz * dz;
 							if (distance <= 576) {
 								lifeCounterObj *= 3;
 							}
-						} else if (typeObj == 8 && specObj == 1) {
-							GameObject *o_shoot = getObjectByKey(_currentObject->specialData[1][9]);
+						}
+						else if (typeObj == 8 && specObj == 1) {
+							GameObject* o_shoot = getObjectByKey(_currentObject->specialData[1][9]);
 							if (o_shoot) {
 								const int dx = ((o_shoot->xPosParent + o_shoot->xPos) - (o->xPosParent + o->xPos)) >> kPosShift;
 								const int dz = ((o_shoot->zPosParent + o_shoot->zPos) - (o->zPosParent + o->zPos)) >> kPosShift;
@@ -4498,14 +4621,16 @@ bool Game::sendMessage(int msg, int16_t destObjKey) {
 								if (lifeCounterObj < _objectsPtrTable[kObjPtrConrad]->specialData[1][18]) {
 									lifeCounterObj = (lifeCounterObj / 2) + 1;
 								}
-							} else if (isConradShoot) {
+							}
+							else if (isConradShoot) {
 								lifeCounterObj *= 2;
 							}
 							break;
 						case kSkillHard:
 							if (o == _objectsPtrTable[kObjPtrConrad]) {
 								lifeCounterObj *= 2;
-							} else if (isConradShoot) {
+							}
+							else if (isConradShoot) {
 								lifeCounterObj /= 2;
 							}
 							break;
@@ -4513,12 +4638,14 @@ bool Game::sendMessage(int msg, int16_t destObjKey) {
 						int lifeCounter2 = lifeCounter;
 						if (_currentObject->specialData[1][18] >= 0) {
 							o->specialData[1][18] -= lifeCounterObj;
-						} else {
+						}
+						else {
 							o->specialData[1][18] += lifeCounterObj;
 						}
 						if (lifeCounter2 >= 0) {
 							_currentObject->specialData[1][18] -= lifeCounter2;
-						} else {
+						}
+						else {
 							_currentObject->specialData[1][18] += lifeCounter2;
 						}
 						if (o->specialData[1][18] <= 0) {
@@ -4531,10 +4658,11 @@ bool Game::sendMessage(int msg, int16_t destObjKey) {
 						int x1 = o->xPosParent + o->xPos;
 						int z1 = o->zPosParent + o->zPos;
 						if (_currentObject->specialData[1][21] == 8 && _currentObject->specialData[1][22] == 1) {
-							GameObject *o_tmp = getObjectByKey(_currentObject->specialData[1][9]);
+							GameObject* o_tmp = getObjectByKey(_currentObject->specialData[1][9]);
 							x2 = o_tmp->xPosParent + o_tmp->xPos;
 							z2 = o_tmp->zPosParent + o_tmp->zPos;
-						} else {
+						}
+						else {
 							x2 = _currentObject->xPosParent + _currentObject->xPos;
 							z2 = _currentObject->zPosParent + _currentObject->zPos;
 						}
@@ -4544,11 +4672,14 @@ bool Game::sendMessage(int msg, int16_t destObjKey) {
 						angle = (angle - (o->pitch & 1023)) & 1023;
 						if (angle <= 128 || angle >= 896) {
 							o->specialData[1][20] = 1;
-						} else if (angle <= 384 && angle > 128) {
+						}
+						else if (angle <= 384 && angle > 128) {
 							o->specialData[1][20] = 3;
-						} else if (angle <= 640 && angle > 384) {
+						}
+						else if (angle <= 640 && angle > 384) {
 							o->specialData[1][20] = 2;
-						} else {
+						}
+						else {
 							o->specialData[1][20] = 4;
 						}
 						const int type = _currentObject->specialData[1][21];
@@ -4581,7 +4712,7 @@ bool Game::sendMessage(int msg, int16_t destObjKey) {
 	return true;
 }
 
-void Game::addToCollidingObjects(GameObject *o) {
+void Game::addToCollidingObjects(GameObject* o) {
 	if ((o->flags[1] & 0x100) == 0) {
 		o->setColliding = true;
 		assert(_collidingObjectsCount < kCollidingObjectsTableSize);
@@ -4610,7 +4741,7 @@ int Game::getCollidingHorizontalMask(int yPos, int upDir, int downDir) {
 	return mask;
 }
 
-void Game::sendShootMessageHelper(GameObject *o, int xPos, int zPos, int radius, int num) {
+void Game::sendShootMessageHelper(GameObject* o, int xPos, int zPos, int radius, int num) {
 	const int dist = getSquareDistance(o->xPos, o->zPos, xPos, zPos, kPosShift);
 	if (dist <= radius) {
 		_currentObject->specialData[1][18] = num;
@@ -4650,7 +4781,8 @@ void Game::drawInfoPanel() {
 				if (_ticks & 1) {
 					drawString(xPos + 33, yPos - 2, _objectsPtrTable[kObjPtrScan]->text, kFontNameCart, 0);
 				}
-			} else {
+			}
+			else {
 				drawString(xPos + 33, yPos - 2, _objectsPtrTable[kObjPtrScan]->text, kFontNameCart, 0);
 			}
 		}
@@ -4659,7 +4791,8 @@ void Game::drawInfoPanel() {
 				if (_ticks & 1) {
 					drawString(xPos + 33, yPos + 7, _objectsPtrTable[kObjPtrShield]->text, kFontNameCart, 0);
 				}
-			} else {
+			}
+			else {
 				drawString(xPos + 33, yPos + 7, _objectsPtrTable[kObjPtrShield]->text, kFontNameCart, 0);
 			}
 		}
@@ -4695,11 +4828,11 @@ void Game::drawInfoPanel() {
 
 void Game::getCutsceneMessages(int num) {
 	_cutsceneMessagesCount = 0;
-	GameObject *o = _objectsPtrTable[kObjPtrScenesCine];
+	GameObject* o = _objectsPtrTable[kObjPtrScenesCine];
 	assert(o);
 	for (o = o->o_child; o; o = o->o_next) {
 		if (o->customData[0] == num) {
-			GamePlayerMessage *msg = &_cutsceneMessagesTable[0];
+			GamePlayerMessage* msg = &_cutsceneMessagesTable[0];
 			for (int ref = 0; getMessage(o->objKey, ref, &msg->desc); ++ref) {
 				if (msg->desc.font & 128) {
 					char name[32];
@@ -4716,23 +4849,28 @@ void Game::getCutsceneMessages(int num) {
 }
 
 void Game::playDeathCutscene(int objKey) {
-	GameObject *o = getObjectByKey(objKey);
+	GameObject* o = getObjectByKey(objKey);
 	if (o->specialData[1][21] == 0x40000) {
 		_cut.queue(48);
 		_level = kLevelGameOver;
-	} else if (_level == 6) {
+	}
+	else if (_level == 6) {
 		_cut.queue(9);
-	} else if (_level == 12) {
+	}
+	else if (_level == 12) {
 		_cut.queue(33);
-	} else if (o->specialData[1][21] == 0x1000000) {
+	}
+	else if (o->specialData[1][21] == 0x1000000) {
 		_cut.queue(1, 4);
-	} else if (o->specialData[1][21] == 8) {
+	}
+	else if (o->specialData[1][21] == 8) {
 		switch (o->specialData[1][22]) {
 		case 0x1:
 			o = getObjectByKey(o->specialData[1][9]);
 			if (o->specialData[1][22] != 0x4000) {
 				_cut.queue(1, 4);
-			} else {
+			}
+			else {
 				_cut.queue(6, 4);
 			}
 			break;
@@ -4747,7 +4885,8 @@ void Game::playDeathCutscene(int objKey) {
 			_cut.queue(12);
 			break;
 		}
-	} else if (o->specialData[1][21] == 16) {
+	}
+	else if (o->specialData[1][21] == 16) {
 		switch (o->specialData[1][22]) {
 		case 0x4:
 			_cut.queue(0);
@@ -4777,27 +4916,38 @@ void Game::playDeathCutscene(int objKey) {
 			_cut.queue(12);
 			break;
 		}
-	} else if (o->specialData[1][21] == 0x20000) {
+	}
+	else if (o->specialData[1][21] == 0x20000) {
 		_cut.queue(2, 4);
-	} else if (o->specialData[1][21] == 0x200000) {
+	}
+	else if (o->specialData[1][21] == 0x200000) {
 		_cut.queue(41);
-	} else if (o->specialData[1][21] == 0x10000) {
+	}
+	else if (o->specialData[1][21] == 0x10000) {
 		_cut.queue(10);
-	} else if (o->specialData[1][21] == 0x100) {
+	}
+	else if (o->specialData[1][21] == 0x100) {
 		_cut.queue(5);
-	} else if (o->specialData[1][21] == 0x800) {
+	}
+	else if (o->specialData[1][21] == 0x800) {
 		_cut.queue(17);
-	} else if (o->specialData[1][21] == 0x800000) {
+	}
+	else if (o->specialData[1][21] == 0x800000) {
 		_cut.queue(49);
-	} else if (o->specialData[1][21] == 0x100000) {
+	}
+	else if (o->specialData[1][21] == 0x100000) {
 		_cut.queue(34);
-	} else if (o->specialData[1][21] == 0x8000) {
+	}
+	else if (o->specialData[1][21] == 0x8000) {
 		_cut.queue(8, 4);
-	} else if (o->specialData[1][21] == 0x80000) {
+	}
+	else if (o->specialData[1][21] == 0x80000) {
 		_cut.queue(38, 4);
-	} else if (o->specialData[1][21] == 0x2000000) {
+	}
+	else if (o->specialData[1][21] == 0x2000000) {
 		_cut.queue(3);
-	} else {
+	}
+	else {
 		_cut.queue(12);
 	}
 	debug(kDebug_GAME, "Game::playDeathCutscene() queue playback num %d counter %d", _cut._numToPlay, _cut._numToPlayCounter);
@@ -4805,7 +4955,7 @@ void Game::playDeathCutscene(int objKey) {
 
 void Game::displayTarget(int cx, int cy) {
 	if (_varsTable[12] != 0 && _varsTable[13] > 0) {
-		GameObject *o = getObjectByKey(_varsTable[12]);
+		GameObject* o = getObjectByKey(_varsTable[12]);
 		const int xPosTarget = o->xPosParent + o->xPos;
 		const int zPosTarget = o->zPosParent + o->zPos;
 		_objectsPtrTable[kObjPtrMusic] = o;
@@ -4813,19 +4963,19 @@ void Game::displayTarget(int cx, int cy) {
 			playMusic(3);
 		}
 		const int pitch = (-_yRotObserver) & 1023;
-		GameObject *objconrad = _objectsPtrTable[kObjPtrConrad];
+		GameObject* objconrad = _objectsPtrTable[kObjPtrConrad];
 		const int xPos_conrad = objconrad->xPosParent + objconrad->xPos;
 		const int zPos_conrad = objconrad->zPosParent + objconrad->zPos;
-		CellMap *cell = getCellMapShr19(xPosTarget, zPosTarget);
+		CellMap* cell = getCellMapShr19(xPosTarget, zPosTarget);
 		const int room = (cell->room != 0) ? cell->room : cell->room2;
 		cell = getCellMapShr19(xPos_conrad, zPos_conrad);
 		const int room1_conrad = cell->room;
 		const int room2_conrad = cell->room2;
 		if (o->state == 1 && o->o_parent != _objectsPtrTable[kObjPtrCimetiere] && (room == room1_conrad || room == room2_conrad)) {
-			const uint8_t *p_btm0 = _res.getData(kResType_SPR, _spritesTable[0], "BTMDESC");
+			const uint8_t* p_btm0 = _res.getData(kResType_SPR, _spritesTable[0], "BTMDESC");
 			const int spr0_w = READ_LE_UINT16(p_btm0);
 			const int spr0_h = READ_LE_UINT16(p_btm0 + 2);
-			const uint8_t *p_spr0 = _res.getData(kResType_SPR, _spritesTable[0], "SPRDATA");
+			const uint8_t* p_spr0 = _res.getData(kResType_SPR, _spritesTable[0], "SPRDATA");
 			p_spr0 = _spriteCache.getData(_spritesTable[0], p_spr0);
 			if (p_spr0) {
 				_render->drawSprite(cx - spr0_w / 2, cy - spr0_h / 2, p_spr0, spr0_w, spr0_h, 0, _spritesTable[0]);
@@ -4835,12 +4985,12 @@ void Game::displayTarget(int cx, int cy) {
 			a = (a - (pitch & 1023)) & 1023;
 			int cosa = g_cos[a];
 			int sina = g_sin[a];
-			const int tx = ( sina * r) >> 15;
+			const int tx = (sina * r) >> 15;
 			const int ty = (-cosa * r) >> 15;
-			const uint8_t *p_btm1 = _res.getData(kResType_SPR, _spritesTable[1], "BTMDESC");
+			const uint8_t* p_btm1 = _res.getData(kResType_SPR, _spritesTable[1], "BTMDESC");
 			const int spr1_w = READ_LE_UINT16(p_btm1);
 			const int spr1_h = READ_LE_UINT16(p_btm1 + 2);
-			const uint8_t *p_spr1 = _res.getData(kResType_SPR, _spritesTable[1], "SPRDATA");
+			const uint8_t* p_spr1 = _res.getData(kResType_SPR, _spritesTable[1], "SPRDATA");
 			p_spr1 = _spriteCache.getData(_spritesTable[1], p_spr1);
 			if (p_spr1) {
 				_render->drawSprite(cx + tx - spr1_w / 2, cy + ty - spr1_h / 2, p_spr1, spr1_w, spr1_h, 0, _spritesTable[1]);
@@ -4849,20 +4999,21 @@ void Game::displayTarget(int cx, int cy) {
 			if (_varsTable[13] <= 0) {
 				_varsTable[12] = 0;
 			}
-		} else {
+		}
+		else {
 			int32_t flag = -1;
 			op_clearTarget(1, &flag);
 		}
 	}
 }
 
-int Game::getShootPos(int16_t objKey, int *x, int *y, int *z) {
-	GameObject *o = (objKey == 0) ? _currentObject : getObjectByKey(objKey);
+int Game::getShootPos(int16_t objKey, int* x, int* y, int* z) {
+	GameObject* o = (objKey == 0) ? _currentObject : getObjectByKey(objKey);
 	if (!o) {
 		return 0;
 	}
-	GameObjectAnimation *anim = &o->anim;
-	const uint8_t *p_anikeyf = anim->anikeyfData;
+	GameObjectAnimation* anim = &o->anim;
+	const uint8_t* p_anikeyf = anim->anikeyfData;
 	if (!p_anikeyf) {
 		if (anim->currentAnimKey == 0) {
 			return 0;
@@ -4872,7 +5023,7 @@ int Game::getShootPos(int16_t objKey, int *x, int *y, int *z) {
 	}
 	const int xb = (((int8_t)p_anikeyf[16]) * 8 + (int16_t)READ_LE_UINT16(p_anikeyf + 2)) << 10;
 	const int zb = (((int8_t)p_anikeyf[17]) * 8 + (int16_t)READ_LE_UINT16(p_anikeyf + 6)) << 10;
-	const int cosy =  g_cos[o->pitch & 1023];
+	const int cosy = g_cos[o->pitch & 1023];
 	const int siny = -g_sin[o->pitch & 1023];
 	const int rx = fixedMul(cosy, xb, kPosShift) - fixedMul(siny, zb, kPosShift);
 	const int rz = fixedMul(siny, xb, kPosShift) + fixedMul(cosy, zb, kPosShift);
@@ -4883,10 +5034,10 @@ int Game::getShootPos(int16_t objKey, int *x, int *y, int *z) {
 }
 
 void Game::drawSprite(int x, int y, int sprKey) {
-	const uint8_t *p_btmdesc = _res.getData(kResType_SPR, sprKey, "BTMDESC");
+	const uint8_t* p_btmdesc = _res.getData(kResType_SPR, sprKey, "BTMDESC");
 	const int w = READ_LE_UINT16(p_btmdesc);
 	const int h = READ_LE_UINT16(p_btmdesc + 2);
-	const uint8_t *data = _res.getData(kResType_SPR, sprKey, "SPRDATA");
+	const uint8_t* data = _res.getData(kResType_SPR, sprKey, "SPRDATA");
 	data = _spriteCache.getData(sprKey, data);
 	if (data) {
 		_render->drawSprite(x, y, data, w, h, 0, sprKey);

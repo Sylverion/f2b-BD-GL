@@ -62,7 +62,7 @@ enum {
 	kWallHeight = 64,
 	kSpritesTableSize = 3,
 	kPosShift = 15,
-	kAniShift = 4,
+	kAniShift = 1,
 	kObjectsDrawListSize = 64,
 	kCollidingObjectsTableSize = 64,
 	kCutsceneMessagesTableSize = 128,
@@ -72,7 +72,7 @@ enum {
 	kRayCastedObjectsTableSize = 32,
 	kFollowingObjectPointsTableSize = 30,
 	kViewportMax = 20,
-	kTickDurationMs = 40,
+	kTickDurationMs = 1,
 	kLevelGameOver = 14,
 	kSaveLoadTexKey = 10000,
 	kSaveLoadSlots = 8,
@@ -183,7 +183,14 @@ struct SpriteImage {
 	int16_t key;
 };
 
+struct Keyframe {
+	int16_t xPos;  // X position of the keyframe
+	int16_t yPos;  // Y position of the keyframe
+	int16_t zPos;  // Z position of the keyframe
+};
+
 struct GameObjectAnimation {
+	float elapsedTime;
 	int16_t animKey;
 	int16_t currentAnimKey;
 	int ticksCount;
@@ -328,6 +335,9 @@ struct SceneTexture {
 };
 
 struct SceneObject {
+	Vertex firstPoly[16];
+	Vertex nextPoly[16];
+	Vertex interPoly[16];
 	uint8_t *polygonsData;
 	int verticesCount;
 	uint8_t *verticesData;

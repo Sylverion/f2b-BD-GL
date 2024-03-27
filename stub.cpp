@@ -12,30 +12,30 @@
 #include "stub.h"
 #include <GL/gl.h> // or use <GL/glew.h> if you're using GLEW
 
-static const char *USAGE =
-	"Fade2Black/OpenGL\n"
-	"Usage: f2b [OPTIONS]...\n"
-	"  --datapath=PATH             Path to PC data files (default '.')\n"
-	"  --language=EN|FR|GR|SP|IT   Language files to use (default 'EN')\n"
-	"  --playdemo                  Use inputs from .DEM files\n"
-	"  --level=NUM                 Start at level NUM\n"
-	"  --voice=EN|FR|GR            Voice files (default 'EN')\n"
-	"  --subtitles                 Display cutscene subtitles\n"
-	"  --savepath=PATH             Path to save files (default '.')\n"
-	"  --fullscreen                Fullscreen display\n"
-	"  --fov=DEG                   Field of vision in degrees (75-130)\n"
-	"  --soundfont=FILE            SoundFont (.sf2) file for music\n"
-	"  --texturefilter=FILTER      Texture filter (default 'linear')\n"
-	"  --texturescaler=NAME        Texture scaler (default 'scale2x')\n"
-	"  --mouse                     Enable mouse controls\n"
-	"  --no-fog                    Disable fog rendering\n"
-	"  --no-gouraud                Disable gouraud shading\n"
-	"  --psxpath=PATH              Path to PSX data files\n"
+static const char* USAGE =
+"Fade2Black/OpenGL\n"
+"Usage: f2b [OPTIONS]...\n"
+"  --datapath=PATH             Path to PC data files (default '.')\n"
+"  --language=EN|FR|GR|SP|IT   Language files to use (default 'EN')\n"
+"  --playdemo                  Use inputs from .DEM files\n"
+"  --level=NUM                 Start at level NUM\n"
+"  --voice=EN|FR|GR            Voice files (default 'EN')\n"
+"  --subtitles                 Display cutscene subtitles\n"
+"  --savepath=PATH             Path to save files (default '.')\n"
+"  --fullscreen                Fullscreen display\n"
+"  --fov=DEG                   Field of vision in degrees (75-130)\n"
+"  --soundfont=FILE            SoundFont (.sf2) file for music\n"
+"  --texturefilter=FILTER      Texture filter (default 'linear')\n"
+"  --texturescaler=NAME        Texture scaler (default 'scale2x')\n"
+"  --mouse                     Enable mouse controls\n"
+"  --no-fog                    Disable fog rendering\n"
+"  --no-gouraud                Disable gouraud shading\n"
+"  --psxpath=PATH              Path to PSX data files\n"
 ;
 
 static const struct {
 	FileLanguage lang;
-	const char *str;
+	const char* str;
 	bool voice;
 } _languages[] = {
 	{ kFileLanguage_EN, "EN", true  },
@@ -45,7 +45,7 @@ static const struct {
 	{ kFileLanguage_IT, "IT", false }
 };
 
-static FileLanguage parseLanguage(const char *language) {
+static FileLanguage parseLanguage(const char* language) {
 	if (language) {
 		for (int i = 0; i < ARRAYSIZE(_languages); ++i) {
 			if (strcasecmp(_languages[i].str, language) == 0) {
@@ -56,7 +56,7 @@ static FileLanguage parseLanguage(const char *language) {
 	return kFileLanguage_EN;
 }
 
-static FileLanguage parseVoice(const char *voice, FileLanguage lang) {
+static FileLanguage parseVoice(const char* voice, FileLanguage lang) {
 	switch (lang) {
 	case kFileLanguage_SP:
 	case kFileLanguage_IT:
@@ -78,9 +78,9 @@ static FileLanguage parseVoice(const char *voice, FileLanguage lang) {
 	}
 }
 
-static char *_dataPath;
-static char *_savePath;
-static char *_psxDataPath;
+static char* _dataPath;
+static char* _savePath;
+static char* _psxDataPath;
 
 struct GameStub_F2B : GameStub {
 
@@ -93,8 +93,8 @@ struct GameStub_F2B : GameStub {
 		kStateInstaller,
 	};
 
-	Render *_render;
-	Game *_g;
+	Render* _render;
+	Game* _g;
 	GameParams _params;
 	FileLanguage  _fileLanguage, _fileVoice;
 	int _displayMode;
@@ -104,10 +104,10 @@ struct GameStub_F2B : GameStub {
 	bool _loadState, _saveState;
 	int _screenshot;
 	bool _takeScreenshot;
-	char *_soundFont;
+	char* _soundFont;
 	RenderParams _renderParams;
-	char *_textureFilter;
-	char *_textureScaler;
+	char* _textureFilter;
+	char* _textureScaler;
 
 	GameStub_F2B()
 		: _render(0), _g(0),
@@ -170,9 +170,9 @@ struct GameStub_F2B : GameStub {
 		_state = state;
 	}
 
-	virtual int setArgs(int argc, char *argv[]) {
-		char *language = 0;
-		char *voice = 0;
+	virtual int setArgs(int argc, char* argv[]) {
+		char* language = 0;
+		char* voice = 0;
 		_nextState = kStateCutscene;
 		g_utilDebugMask = kDebug_INFO;
 		while (1) {
@@ -238,17 +238,17 @@ struct GameStub_F2B : GameStub {
 				_fov = atoi(optarg);
 				break;
 			case 11: {
-					static const char *levels[] = {
-						"1", "2a", "2b", "2c", "3", "4a", "4b", "4c", "5a", "5b", "5c", "6a", "6b", 0
-					};
-					for (int i = 0; levels[i]; ++i) {
-						if (strcasecmp(levels[i], optarg) == 0) {
-							_params.levelNum = i;
-							break;
-						}
+				static const char* levels[] = {
+					"1", "2a", "2b", "2c", "3", "4a", "4b", "4c", "5a", "5b", "5c", "6a", "6b", 0
+				};
+				for (int i = 0; levels[i]; ++i) {
+					if (strcasecmp(levels[i], optarg) == 0) {
+						_params.levelNum = i;
+						break;
 					}
 				}
-				break;
+			}
+				   break;
 			case 12:
 				_soundFont = strdup(optarg);
 				_params.sf2 = _soundFont;
@@ -280,23 +280,23 @@ struct GameStub_F2B : GameStub {
 				_params.cheats = atoi(optarg);
 				break;
 			case 101: {
-					static struct {
-						const char *name;
-						int state;
-					} states[] = {
-						{ "game", kStateGame },
-						{ "installer", kStateInstaller },
-						{ "menu", kStateMenu },
-						{ 0, -1 },
-					};
-					for (int i = 0; states[i].name; ++i) {
-						if (strcasecmp(states[i].name, optarg) == 0) {
-							_nextState = states[i].state;
-							break;
-						}
+				static struct {
+					const char* name;
+					int state;
+				} states[] = {
+					{ "game", kStateGame },
+					{ "installer", kStateInstaller },
+					{ "menu", kStateMenu },
+					{ 0, -1 },
+				};
+				for (int i = 0; states[i].name; ++i) {
+					if (strcasecmp(states[i].name, optarg) == 0) {
+						_nextState = states[i].state;
+						break;
 					}
 				}
-				break;
+			}
+					break;
 			default:
 				printf("%s\n", USAGE);
 				return -1;
@@ -494,6 +494,7 @@ struct GameStub_F2B : GameStub {
 			}
 			_g->updateGameInput();
 			_g->doTick();
+			//_g->doTickrender();
 			if (_g->inp.inventoryKey) {
 				_g->inp.inventoryKey = false;
 				_nextState = kStateInventory;
@@ -543,7 +544,7 @@ struct GameStub_F2B : GameStub {
 			_g->inp.pointers[pointer][1].down = false;
 		}
 	}
-	virtual void initGL(int w, int h, float *ar) {
+	virtual void initGL(int w, int h, float* ar) {
 		_render->resizeScreen(w, h, ar, _fov);
 	}
 	virtual void drawGL(unsigned int ticks) {
@@ -551,7 +552,7 @@ struct GameStub_F2B : GameStub {
 
 		switch (_state) {
 		case kStateGame:
-			_g->doTickrender();
+			//_g->doTickrender();
 			_render->updateCameraPos(); // Call updateCameraPos method
 			_render->updateCameraPitch(); // Call updateCameraPitch method
 			break;
@@ -624,7 +625,7 @@ struct GameStub_F2B : GameStub {
 };
 
 extern "C" {
-	GameStub *GameStub_create() {
+	GameStub* GameStub_create() {
 		return new GameStub_F2B;
 	}
 }

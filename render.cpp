@@ -25,8 +25,8 @@ static const int kOverlayHeight = 200;
 static const GLfloat _fogColor[4] = { .1, .1, .1, .5 };
 
 static const GLfloat _lightPosition[4] = { 0., .6, 0., 0. };
-static const GLfloat _lightAmbient[4]  = { .2, .2, .2, 1. };
-static const GLfloat _lightDiffuse[4]  = { 1., 1., 1., 1. };
+static const GLfloat _lightAmbient[4] = { .2, .2, .2, 1. };
+static const GLfloat _lightDiffuse[4] = { 1., 1., 1., 1. };
 static const GLfloat _lightSpecular[4] = { 1., 1., 1., 1. };
 
 
@@ -43,9 +43,9 @@ struct Vertex3f {
 static const int kVerticesBufferSize = 1024;
 static GLfloat _verticesBuffer[kVerticesBufferSize * 3];
 
-static GLfloat *bufferVertex(const Vertex *vertices, int count) {
+static GLfloat* bufferVertex(const Vertex* vertices, int count) {
 	assert(count <= kVerticesBufferSize);
-	GLfloat *buf = _verticesBuffer;
+	GLfloat* buf = _verticesBuffer;
 	for (int i = 0; i < count; ++i) {
 		buf[0] = vertices[i].x;
 		buf[1] = vertices[i].y;
@@ -63,15 +63,15 @@ static void emitQuad2i(int x, int y, int w, int h) {
 	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 #else
 	glBegin(GL_QUADS);
-		glVertex2i(x, y);
-		glVertex2i(x + w, y);
-		glVertex2i(x + w, y + h);
-		glVertex2i(x, y + h);
+	glVertex2i(x, y);
+	glVertex2i(x + w, y);
+	glVertex2i(x + w, y + h);
+	glVertex2i(x, y + h);
 	glEnd();
 #endif
 }
 
-static void emitQuadTex2i(int x, int y, int w, int h, GLfloat *uv) {
+static void emitQuadTex2i(int x, int y, int w, int h, GLfloat* uv) {
 #ifdef USE_GLES
 	GLfloat vertices[] = { x, y, x + w, y, x + w, y + h, x, y + h };
 	glVertexPointer(2, GL_FLOAT, 0, vertices);
@@ -79,75 +79,75 @@ static void emitQuadTex2i(int x, int y, int w, int h, GLfloat *uv) {
 	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 #else
 	glBegin(GL_QUADS);
-		glTexCoord2f(uv[0], uv[1]);
-		glVertex2i(x, y);
-		glTexCoord2f(uv[2], uv[3]);
-		glVertex2i(x + w, y);
-		glTexCoord2f(uv[4], uv[5]);
-		glVertex2i(x + w, y + h);
-		glTexCoord2f(uv[6], uv[7]);
-		glVertex2i(x, y + h);
+	glTexCoord2f(uv[0], uv[1]);
+	glVertex2i(x, y);
+	glTexCoord2f(uv[2], uv[3]);
+	glVertex2i(x + w, y);
+	glTexCoord2f(uv[4], uv[5]);
+	glVertex2i(x + w, y + h);
+	glTexCoord2f(uv[6], uv[7]);
+	glVertex2i(x, y + h);
 	glEnd();
 #endif
 }
 
-static void emitQuadTex3i(const Vertex *vertices, GLfloat *uv) {
+static void emitQuadTex3i(const Vertex* vertices, GLfloat* uv) {
 #ifdef USE_GLES
 	glVertexPointer(3, GL_FLOAT, 0, bufferVertex(vertices, 4));
 	glTexCoordPointer(2, GL_FLOAT, 0, uv);
 	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 #else
 	glBegin(GL_QUADS);
-		glTexCoord2f(uv[0], uv[1]);
-		glVertex3i(vertices[0].x, vertices[0].y, vertices[0].z);
-		glTexCoord2f(uv[2], uv[3]);
-		glVertex3i(vertices[1].x, vertices[1].y, vertices[1].z);
-		glTexCoord2f(uv[4], uv[5]);
-		glVertex3i(vertices[2].x, vertices[2].y, vertices[2].z);
-		glTexCoord2f(uv[6], uv[7]);
-		glVertex3i(vertices[3].x, vertices[3].y, vertices[3].z);
+	glTexCoord2f(uv[0], uv[1]);
+	glVertex3i(vertices[0].x, vertices[0].y, vertices[0].z);
+	glTexCoord2f(uv[2], uv[3]);
+	glVertex3i(vertices[1].x, vertices[1].y, vertices[1].z);
+	glTexCoord2f(uv[4], uv[5]);
+	glVertex3i(vertices[2].x, vertices[2].y, vertices[2].z);
+	glTexCoord2f(uv[6], uv[7]);
+	glVertex3i(vertices[3].x, vertices[3].y, vertices[3].z);
 	glEnd();
 #endif
 }
 
-static void emitTriTex3i(const Vertex *vertices, const GLfloat *uv) {
+static void emitTriTex3i(const Vertex* vertices, const GLfloat* uv) {
 #ifdef USE_GLES
 	glVertexPointer(3, GL_FLOAT, 0, bufferVertex(vertices, 3));
 	glTexCoordPointer(2, GL_FLOAT, 0, uv);
 	glDrawArrays(GL_TRIANGLES, 0, 3);
 #else
 	glBegin(GL_TRIANGLES);
-		glTexCoord2f(uv[0], uv[1]);
-		glVertex3i(vertices[0].x, vertices[0].y, vertices[0].z);
-		glTexCoord2f(uv[2], uv[3]);
-		glVertex3i(vertices[1].x, vertices[1].y, vertices[1].z);
-		glTexCoord2f(uv[4], uv[5]);
-		glVertex3i(vertices[2].x, vertices[2].y, vertices[2].z);
+	glTexCoord2f(uv[0], uv[1]);
+	glVertex3i(vertices[0].x, vertices[0].y, vertices[0].z);
+	glTexCoord2f(uv[2], uv[3]);
+	glVertex3i(vertices[1].x, vertices[1].y, vertices[1].z);
+	glTexCoord2f(uv[4], uv[5]);
+	glVertex3i(vertices[2].x, vertices[2].y, vertices[2].z);
 	glEnd();
 #endif
 }
 
-static void emitTriFan3i(const Vertex *vertices, int count) {
+static void emitTriFan3i(const Vertex* vertices, int count) {
 #ifdef USE_GLES
 	glVertexPointer(3, GL_FLOAT, 0, bufferVertex(vertices, count));
 	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 #else
 	glBegin(GL_TRIANGLE_FAN);
-		for (int i = 0; i < count; ++i) {
-			glNormal3i(vertices[i].nx, vertices[i].ny, vertices[i].nz);
-			glVertex3i(vertices[i].x, vertices[i].y, vertices[i].z);
-		}
-        glEnd();
+	for (int i = 0; i < count; ++i) {
+		glNormal3i(vertices[i].nx, vertices[i].ny, vertices[i].nz);
+		glVertex3i(vertices[i].x, vertices[i].y, vertices[i].z);
+	}
+	glEnd();
 #endif
 }
 
-static void emitPoint3i(const Vertex *pos) {
+static void emitPoint3i(const Vertex* pos) {
 #ifdef USE_GLES
 	glVertexPointer(3, GL_FLOAT, 0, bufferVertex(pos, 1));
 	glDrawArrays(GL_POINTS, 0, 1);
 #else
 	glBegin(GL_POINTS);
-		glVertex3i(pos->x, pos->y, pos->z);
+	glVertex3i(pos->x, pos->y, pos->z);
 	glEnd();
 #endif
 }
@@ -157,7 +157,7 @@ static Vertex3f _cameraPos;
 static GLfloat _cameraPitch;
 struct timeval _frameTimeStamp;
 
-Render::Render(const RenderParams *params) {
+Render::Render(const RenderParams* params) {
 	memset(_clut, 0, sizeof(_clut));
 	_aspectRatio = 1.778;
 	_fov = 0;
@@ -193,8 +193,8 @@ Render::Render(const RenderParams *params) {
 	if (_lighting) {
 		glEnable(GL_LIGHT0);
 		glLightfv(GL_LIGHT0, GL_POSITION, _lightPosition);
-		glLightfv(GL_LIGHT0, GL_AMBIENT,  _lightAmbient);
-		glLightfv(GL_LIGHT0, GL_DIFFUSE,  _lightDiffuse);
+		glLightfv(GL_LIGHT0, GL_AMBIENT, _lightAmbient);
+		glLightfv(GL_LIGHT0, GL_DIFFUSE, _lightDiffuse);
 		glLightfv(GL_LIGHT0, GL_SPECULAR, _lightSpecular);
 	}
 	glShadeModel(GL_SMOOTH);
@@ -209,7 +209,7 @@ void Render::flushCachedTextures() {
 	_overlay.tex = 0;
 }
 
-void Render::resizeScreen(int w, int h, float *p, int fov) {
+void Render::resizeScreen(int w, int h, float* p, int fov) {
 	_w = w;
 	_h = h;
 	_aspectRatio = 16 / 9;
@@ -234,7 +234,7 @@ void Render::setCameraPos(int x, int y, int z, int shift) {
 
 // This function should be called every frame
 void Render::updateCameraPos() {
-	const float interpolationFactor = .25f; // You can adjust this value to change the speed of the camera movement
+	const float interpolationFactor = .2f; // You can adjust this value to change the speed of the camera movement
 
 	_cameraPos.x = _cameraPos.x + (_targetCameraPos.x - _cameraPos.x) * interpolationFactor;
 	_cameraPos.z = _cameraPos.z + (_targetCameraPos.z - _cameraPos.z) * interpolationFactor;
@@ -253,7 +253,7 @@ void Render::setCameraPitch(int ry) {
 
 // This function should be called every frame
 void Render::updateCameraPitch() {
-	const float interpolationFactor = .25f; // You can adjust this value to change the speed of the camera movement
+	const float interpolationFactor = .2f; // You can adjust this value to change the speed of the camera movement
 
 	float diff = _targetCameraPitch - _cameraPitch;
 
@@ -280,11 +280,11 @@ bool Render::hasTexture(int16_t key) {
 	return _textureCache.hasTexture(key);
 }
 
-void Render::prepareTextureLut(const uint8_t *data, int w, int h, const uint8_t *clut, int16_t texKey) {
+void Render::prepareTextureLut(const uint8_t* data, int w, int h, const uint8_t* clut, int16_t texKey) {
 	_textureCache.getCachedTexture(texKey, data, w, h, false, clut);
 }
 
-void Render::prepareTextureRgb(const uint8_t *data, int w, int h, int16_t texKey) {
+void Render::prepareTextureRgb(const uint8_t* data, int w, int h, int16_t texKey) {
 	_textureCache.getCachedTexture(texKey, data, w, h, true);
 }
 
@@ -292,7 +292,7 @@ void Render::releaseTexture(int16_t texKey) {
 	_textureCache.releaseTexture(texKey);
 }
 
-void Render::drawPolygonFlat(const Vertex *vertices, int verticesCount, int color) {
+void Render::drawPolygonFlat(const Vertex* vertices, int verticesCount, int color) {
 	bool lightFlatColor = false;
 	switch (color) {
 	case kFlatColorRed:
@@ -325,7 +325,8 @@ void Render::drawPolygonFlat(const Vertex *vertices, int verticesCount, int colo
 				lightFlatColor = true;
 			}
 			glColor4ub(_clut[color * 3], _clut[color * 3 + 1], _clut[color * 3 + 2], color == 0 ? 0 : 255);
-		} else {
+		}
+		else {
 			warning("Render::drawPolygonFlat() unhandled color %d", color);
 		}
 		break;
@@ -366,11 +367,11 @@ void Render::checkAndSaveTexture(int16_t texKey, const uint8_t* texData, int tex
 	}
 }
 bool checkAndSaveTextureEnabled = false;
-void Render::drawPolygonTexture(const Vertex *vertices, int verticesCount, int primitive, const uint8_t *texData, int texW, int texH, int16_t texKey) {
+void Render::drawPolygonTexture(const Vertex* vertices, int verticesCount, int primitive, const uint8_t* texData, int texW, int texH, int16_t texKey) {
 	assert(vertices && verticesCount >= 4);
 	glColor4ub(255, 255, 255, 255);
 	glEnable(GL_TEXTURE_2D);
-	Texture *t = _textureCache.getCachedTexture(texKey, texData, texW, texH);
+	Texture* t = _textureCache.getCachedTexture(texKey, texData, texW, texH);
 	glBindTexture(GL_TEXTURE_2D, t->id);
 	const GLfloat tx = t->u;
 	const GLfloat ty = t->v;
@@ -387,22 +388,22 @@ void Render::drawPolygonTexture(const Vertex *vertices, int verticesCount, int p
 		// :   :
 		// 4:::3
 		// walls and Sprites events HUD
-		{
-			GLfloat uv[] = { 0., 0., tx, 0., tx, ty, 0., ty };
-			emitQuadTex3i(vertices, uv);
-		}
-		break;
+	{
+		GLfloat uv[] = { 0., 0., tx, 0., tx, ty, 0., ty };
+		emitQuadTex3i(vertices, uv);
+	}
+	break;
 	case 1:
 		//
 		//   1
 		//  : :
 		// 3:::2
 		//
-		{
-			GLfloat uv[] = { tx / 2, 0., tx, ty, 0., ty };
-			emitTriTex3i(vertices, uv);
-		}
-		break;
+	{
+		GLfloat uv[] = { tx / 2, 0., tx, ty, 0., ty };
+		emitTriTex3i(vertices, uv);
+	}
+	break;
 	case 3:
 	case 5:
 		//
@@ -410,22 +411,22 @@ void Render::drawPolygonTexture(const Vertex *vertices, int verticesCount, int p
 		// :   :
 		// 3:::2
 		//
-		{
-			GLfloat uv[] = { tx, 0., tx, ty, 0., ty, 0., 0. };
-			emitQuadTex3i(vertices, uv);
-		}
-		break;
+	{
+		GLfloat uv[] = { tx, 0., tx, ty, 0., ty, 0., 0. };
+		emitQuadTex3i(vertices, uv);
+	}
+	break;
 	case 4:
 		//
 		//   3
 		//  : :
 		// 2:::1
 		//
-		{
-			GLfloat uv[] = { tx, ty, 0., ty, tx / 2, 0. };
-			emitTriTex3i(vertices, uv);
-		}
-		break;
+	{
+		GLfloat uv[] = { tx, ty, 0., ty, tx / 2, 0. };
+		emitTriTex3i(vertices, uv);
+	}
+	break;
 	case 6:
 	case 8:
 		//
@@ -433,22 +434,22 @@ void Render::drawPolygonTexture(const Vertex *vertices, int verticesCount, int p
 		// :   :
 		// 2:::1
 		//Skybox
-		{
-			GLfloat uv[] = { tx, ty, 0., ty, 0., 0., tx, 0. };
-			emitQuadTex3i(vertices, uv);
-		}
-		break;
+	{
+		GLfloat uv[] = { tx, ty, 0., ty, 0., 0., tx, 0. };
+		emitQuadTex3i(vertices, uv);
+	}
+	break;
 	case 7:
 		//
 		//   2
 		//  : :
 		// 1:::3
 		//
-		{
-			GLfloat uv[] = { .0, ty, tx / 2, 0., tx, ty };
-			emitTriTex3i(vertices, uv);
-		}
-		break;
+	{
+		GLfloat uv[] = { .0, ty, tx / 2, 0., tx, ty };
+		emitTriTex3i(vertices, uv);
+	}
+	break;
 	case 9:
 	case 10:
 		//
@@ -456,11 +457,11 @@ void Render::drawPolygonTexture(const Vertex *vertices, int verticesCount, int p
 		// :   :
 		// 1:::4
 		//Grounds
-		{
-			GLfloat uv[] = { 0., 0., 0., ty, tx, ty, tx, 0. };
-			emitQuadTex3i(vertices, uv);
-		}
-		break;
+	{
+		GLfloat uv[] = { 0., 0., 0., ty, tx, ty, tx, 0. };
+		emitQuadTex3i(vertices, uv);
+	}
+	break;
 	default:
 		warning("Render::drawPolygonTexture() unhandled primitive %d", primitive);
 		break;
@@ -469,7 +470,7 @@ void Render::drawPolygonTexture(const Vertex *vertices, int verticesCount, int p
 
 }
 
-void Render::drawParticle(const Vertex *pos, int color) {
+void Render::drawParticle(const Vertex* pos, int color) {
 	switch (color) {
 	case kFlatColorRed:
 		glColor4ub(255, 0, 0, 127);
@@ -495,7 +496,8 @@ void Render::drawParticle(const Vertex *pos, int color) {
 	default:
 		if (color >= 0 && color < 256) {
 			glColor4ub(_clut[color * 3], _clut[color * 3 + 1], _clut[color * 3 + 2], color == 0 ? 0 : 255);
-		} else {
+		}
+		else {
 			warning("Render::drawParticle() unhandled color %d", color);
 		}
 	}
@@ -504,32 +506,32 @@ void Render::drawParticle(const Vertex *pos, int color) {
 	glPointSize(1.);
 }
 
-void Render::drawSprite(int x, int y, const uint8_t *texData, int texW, int texH, int primitive, int16_t texKey, uint8_t transparentScale) {
+void Render::drawSprite(int x, int y, const uint8_t* texData, int texW, int texH, int primitive, int16_t texKey, uint8_t transparentScale) {
 	glColor4ub(255, 255, 255, transparentScale);
 	glEnable(GL_TEXTURE_2D);
-	Texture *t = _textureCache.getCachedTexture(texKey, texData, texW, texH);
+	Texture* t = _textureCache.getCachedTexture(texKey, texData, texW, texH);
 	glBindTexture(GL_TEXTURE_2D, t->id);
 	switch (primitive) {
 	case 0:
 		// 1:::2
 		// :   :
 		// 4:::3
-		{
-			GLfloat uv[] = { 0., 0., t->u, 0., t->u, t->v, 0., t->v };
-			emitQuadTex2i(x, y, texW, texH, uv);
-		}
-		break;
+	{
+		GLfloat uv[] = { 0., 0., t->u, 0., t->u, t->v, 0., t->v };
+		emitQuadTex2i(x, y, texW, texH, uv);
+	}
+	break;
 	case 9:
 		//
 		// 2:::3
 		// :   :
 		// 1:::4
 		//
-		{
-			GLfloat uv[] = { 0., 0., 0., t->v, t->u, t->v, t->u, 0. };
-			emitQuadTex2i(x, y, texW, texH, uv);
-		}
-		break;
+	{
+		GLfloat uv[] = { 0., 0., 0., t->v, t->u, t->v, t->u, 0. };
+		emitQuadTex2i(x, y, texW, texH, uv);
+	}
+	break;
 	default:
 		warning("Render::drawSprite() unhandled primitive %d", primitive);
 		break;
@@ -543,7 +545,7 @@ void Render::drawRectangle(int x, int y, int w, int h, int color) {
 	emitQuad2i(x, y, w, h);
 }
 
-void Render::copyToOverlay(int x, int y, int w, int h, const uint8_t *data, bool rgb, const uint8_t *pal) {
+void Render::copyToOverlay(int x, int y, int w, int h, const uint8_t* data, bool rgb, const uint8_t* pal) {
 	_overlay.x = x;
 	_overlay.y = y;
 	_overlay.w = w;
@@ -551,7 +553,8 @@ void Render::copyToOverlay(int x, int y, int w, int h, const uint8_t *data, bool
 	if (!_overlay.tex) {
 		_overlay.rgbTex = rgb;
 		_overlay.tex = _textureCache.createTexture(data, w, h, rgb, pal);
-	} else {
+	}
+	else {
 		_textureCache.updateTexture(_overlay.tex, data, w, h, rgb, pal);
 	}
 }
@@ -560,7 +563,8 @@ void Render::setIgnoreDepth(bool ignoreDepth) {
 	if (_drawObjectIgnoreDepth != ignoreDepth) {
 		if (ignoreDepth) {
 			glDisable(GL_DEPTH_TEST);
-		} else {
+		}
+		else {
 			glEnable(GL_DEPTH_TEST);
 		}
 		_drawObjectIgnoreDepth = ignoreDepth;
@@ -592,7 +596,7 @@ void Render::resizeOverlay(int w, int h, bool rgb, int displayWidth, int display
 			_overlay.tex = 0;
 		}
 	}
-	_overlay.displayWidth  = displayWidth  == 0 ? w : displayWidth;
+	_overlay.displayWidth = displayWidth == 0 ? w : displayWidth;
 	_overlay.displayHeight = displayHeight == 0 ? h : displayHeight;
 }
 
@@ -601,7 +605,7 @@ void Render::setPaletteScale(bool greyScale, int rgbScale) {
 	_paletteRgbScale = rgbScale;
 }
 
-void Render::setPalette(const uint8_t *pal, int offset, int count) {
+void Render::setPalette(const uint8_t* pal, int offset, int count) {
 	int color = 3 * offset;
 	for (int i = 0; i < count; ++i) {
 		int r = pal[0];
@@ -675,7 +679,8 @@ void Render::setupProjection(int mode) {
 		glLoadIdentity();
 		if (_lighting) {
 			glEnable(GL_LIGHT0);
-		} else {
+		}
+		else {
 			glDisable(GL_LIGHT0);
 		}
 		glScalef(1., -.75, 1.);
@@ -697,7 +702,8 @@ void Render::setupProjection(int mode) {
 
 		if (_lighting) {
 			glEnable(GL_LIGHT0);
-		} else {
+		}
+		else {
 			glDisable(GL_LIGHT0);
 		}
 		glTranslatef(0, -1024., -3092.);
@@ -714,7 +720,8 @@ void Render::setupProjection(int mode) {
 			const float h = -tan(_fov * .5) * 7.5;
 			const float w = aspect * h / 2;
 			glFrustum(w, -w, h, 0, 1., 1024);
-		} else {
+		}
+		else {
 			glFrustum(-.5, .5, -aspect / 2, 0., 1., 1024);
 		}
 		glTranslatef(0., 0., -16.);
@@ -723,7 +730,8 @@ void Render::setupProjection(int mode) {
 		glLoadIdentity();
 		if (_lighting) {
 			glEnable(GL_LIGHT0);
-		} else {
+		}
+		else {
 			glDisable(GL_LIGHT0);
 		}
 		glScalef(1., -.5, -1.);
@@ -732,7 +740,8 @@ void Render::setupProjection(int mode) {
 
 		if (_fog) {
 			glEnable(GL_FOG);
-		} else {
+		}
+		else {
 			glDisable(GL_FOG);
 		}
 		break;
@@ -772,7 +781,7 @@ void Render::drawOverlay() {
 	}
 
 	++_framesCount;
-	
+
 	if ((_framesCount & 61) == 0) {
 		struct timeval t1;
 		gettimeofday(&t1, 0);
@@ -780,14 +789,14 @@ void Render::drawOverlay() {
 		_frameTimeStamp = t1;
 		if (msecs != 0) {
 			_framesPerSec = (int)(1000. * 62 / msecs);
-			
+
 		}
 	}
 }
 
-const uint8_t *Render::captureScreen(int *w, int *h) {
+const uint8_t* Render::captureScreen(int* w, int* h) {
 	if (!_screenshotBuf) {
-		_screenshotBuf = (uint8_t *)calloc(_w * _h, 4);
+		_screenshotBuf = (uint8_t*)calloc(_w * _h, 4);
 	}
 	if (_screenshotBuf) {
 		glReadPixels(0, 0, _w, _h, GL_RGBA, GL_UNSIGNED_BYTE, _screenshotBuf);
